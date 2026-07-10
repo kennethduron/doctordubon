@@ -1,0 +1,111 @@
+﻿rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function hasProfile() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function role() {
+      return hasProfile() ? userDoc().data.role : null;
+    }
+
+    function clinicId() {
+      return hasProfile() ? userDoc().data.clinicId : null;
+    }
+
+    function activeUser() {
+      return hasProfile() && userDoc().data.status == "active";
+    }
+
+    function technicalOwner() {
+      return activeUser() && role() == "technical_owner";
+    }
+
+    function businessOwner() {
+      return activeUser() && role() == "business_owner";
+    }
+
+    function admin() {
+      return activeUser() && role() == "admin";
+    }
+
+    function canCreateMovement() {
+      return technicalOwner() || businessOwner() || admin();
+    }
+
+    function canEditMovement() {
+      return technicalOwner() || businessOwner();
+    }
+
+    function sameClinicResource() {
+      return activeUser() && resource.data.clinicId == clinicId();
+    }
+
+    function sameClinicRequest() {
+      return activeUser() && request.resource.data.clinicId == clinicId();
+    }
+
+    match /users/{userId} {
+      allow read: if activeUser() && resource.data.clinicId == clinicId();
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.id == userId
+        && request.resource.data.role == "admin"
+        && request.resource.data.status == "pending";
+      allow update: if activeUser()
+        && resource.data.clinicId == clinicId()
+        && request.resource.data.clinicId == resource.data.clinicId
+        && (
+          technicalOwner()
+          || (
+            businessOwner()
+            && resource.data.role != "technical_owner"
+            && request.resource.data.role != "technical_owner"
+          )
+          || (
+            request.auth.uid == userId
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.status == resource.data.status
+          )
+        );
+      allow delete: if technicalOwner() && resource.data.role != "technical_owner";
+    }
+
+    match /movements/{movementId} {
+      allow read: if sameClinicResource();
+      allow create: if canCreateMovement()
+        && sameClinicRequest()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == "active"
+        && request.resource.data.type in ["income", "expense"];
+      allow update: if sameClinicResource()
+        && canEditMovement()
+        && request.resource.data.clinicId == resource.data.clinicId
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+
+    match /clinics/{clinicIdDocument} {
+      allow read: if activeUser() && clinicIdDocument == clinicId();
+      allow create, update: if technicalOwner() && clinicIdDocument == clinicId();
+      allow delete: if false;
+    }
+
+    match /invitations/{invitationId} {
+      allow read: if activeUser() && resource.data.clinicId == clinicId();
+      allow create: if technicalOwner() || businessOwner();
+      allow update: if technicalOwner() || businessOwner();
+      allow delete: if technicalOwner();
+    }
+  }
+}

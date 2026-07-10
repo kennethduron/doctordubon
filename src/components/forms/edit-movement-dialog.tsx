@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -17,43 +17,29 @@ type EditMovementDialogProps = {
   onSave: (movementId: string, data: UpdateMovementInput) => Promise<void>;
 };
 
+type EditMovementDialogFormProps = Omit<EditMovementDialogProps, "movement" | "open"> & {
+  movement: Movement;
+};
+
 const paymentOptions = paymentMethods.map((method) => ({
   value: method,
   label: paymentMethodLabels[method],
 }));
 
-export function EditMovementDialog({ movement, open, saving = false, errorMessage, onClose, onSave }: EditMovementDialogProps) {
-  const categories = useMemo(() => {
-    if (!movement) return incomeCategories;
-    return movement.type === "income" ? incomeCategories : expenseCategories;
-  }, [movement]);
+function EditMovementDialogForm({ movement, saving = false, errorMessage, onClose, onSave }: EditMovementDialogFormProps) {
+  const categories = movement.type === "income" ? incomeCategories : expenseCategories;
   const categoryOptions = useMemo(() => categories.map((category) => ({ value: category, label: category })), [categories]);
-  const [date, setDate] = useState("");
-  const [category, setCategory] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
-  const [notes, setNotes] = useState("");
+  const [date, setDate] = useState(movement.date);
+  const [category, setCategory] = useState(movement.category);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(movement.paymentMethod);
+  const [amount, setAmount] = useState(String(movement.amount));
+  const [description, setDescription] = useState(movement.description);
+  const [notes, setNotes] = useState(movement.notes ?? "");
   const [localError, setLocalError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!movement) return;
-
-    setDate(movement.date);
-    setCategory(movement.category);
-    setPaymentMethod(movement.paymentMethod);
-    setAmount(String(movement.amount));
-    setDescription(movement.description);
-    setNotes(movement.notes ?? "");
-    setLocalError(null);
-  }, [movement]);
-
-  if (!open || !movement) {
-    return null;
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const movementId = movement.id;
     setLocalError(null);
 
     const parsedAmount = Number(amount);
@@ -68,7 +54,7 @@ export function EditMovementDialog({ movement, open, saving = false, errorMessag
       return;
     }
 
-    await onSave(movement.id, {
+    await onSave(movementId, {
       date,
       category,
       paymentMethod,
@@ -103,4 +89,12 @@ export function EditMovementDialog({ movement, open, saving = false, errorMessag
       </div>
     </div>
   );
+}
+
+export function EditMovementDialog({ movement, open, ...props }: EditMovementDialogProps) {
+  if (!open || !movement) {
+    return null;
+  }
+
+  return <EditMovementDialogForm key={movement.id} movement={movement} {...props} />;
 }

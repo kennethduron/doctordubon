@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,12 +46,16 @@ const paymentOptions = paymentMethods.map((method) => ({
   label: paymentMethodLabels[method],
 }));
 
+function firstCategoryFor(type: MovementType) {
+  return type === "income" ? incomeCategories[0] : expenseCategories[0];
+}
+
 export function MovementForm({ mode, disabled = false, successMessage, errorMessage, onSubmit }: MovementFormProps) {
   const labels = titles[mode];
   const initialType = mode === "expense" ? "expense" : "income";
   const [type, setType] = useState<MovementType>(initialType);
   const [date, setDate] = useState(getTodayDate());
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(firstCategoryFor(initialType));
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -62,9 +66,10 @@ export function MovementForm({ mode, disabled = false, successMessage, errorMess
   const categories = useMemo(() => (type === "income" ? incomeCategories : expenseCategories), [type]);
   const categoryOptions = useMemo(() => categories.map((currentCategory) => ({ value: currentCategory, label: currentCategory })), [categories]);
 
-  useEffect(() => {
-    setCategory(categories[0] ?? "");
-  }, [categories]);
+  function handleTypeChange(nextType: MovementType) {
+    setType(nextType);
+    setCategory(firstCategoryFor(nextType));
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,7 +121,7 @@ export function MovementForm({ mode, disabled = false, successMessage, errorMess
           <div className="grid gap-4 md:grid-cols-2">
             <Input id={`${mode}-date`} label="Fecha" type="date" value={date} onChange={(event) => setDate(event.target.value)} disabled={disabled || submitting} />
             {mode === "general" ? (
-              <Select id="movement-type" label="Tipo de movimiento" options={movementTypeOptions} value={type} onChange={(event) => setType(event.target.value as MovementType)} disabled={disabled || submitting} />
+              <Select id="movement-type" label="Tipo de movimiento" options={movementTypeOptions} value={type} onChange={(event) => handleTypeChange(event.target.value as MovementType)} disabled={disabled || submitting} />
             ) : null}
             <Select id={`${mode}-category`} label="Categoría" options={categoryOptions} value={category} onChange={(event) => setCategory(event.target.value)} disabled={disabled || submitting} />
             <Select id={`${mode}-payment`} label="Método de pago" options={paymentOptions} value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} disabled={disabled || submitting} />

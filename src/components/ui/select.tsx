@@ -1,4 +1,6 @@
-﻿import type { ChangeEvent, SelectHTMLAttributes } from "react";
+﻿"use client";
+
+import type { ChangeEvent, SelectHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 type SelectOption = string | { value: string; label: string };
@@ -42,3 +44,4 @@ export function Select({ label, options, className, id, onChange, ...props }: Se
     </label>
   );
 }
+

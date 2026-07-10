@@ -37,9 +37,9 @@ export function useMovements(options?: UseMovementsOptions) {
   const [startDate, setStartDate] = useState(initialRange.startDate);
   const [endDate, setEndDate] = useState(initialRange.endDate);
 
-  const canUseProfile = Boolean(userProfile && userProfile.status === "active" && role);
-
   const refreshMovements = useCallback(async () => {
+    const canUseProfile = Boolean(userProfile && userProfile.status === "active" && role);
+
     if (!userProfile?.clinicId || !canUseProfile) {
       setMovements([]);
       setLoading(false);
@@ -57,15 +57,18 @@ export function useMovements(options?: UseMovementsOptions) {
     } finally {
       setLoading(false);
     }
-  }, [canUseProfile, endDate, startDate, userProfile?.clinicId]);
+  }, [endDate, role, startDate, userProfile]);
 
   useEffect(() => {
     if (options?.autoLoad === false) {
-      setLoading(false);
       return;
     }
 
-    void refreshMovements();
+    const timeoutId = window.setTimeout(() => {
+      void refreshMovements();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [options?.autoLoad, refreshMovements]);
 
   async function createMovement(data: CreateMovementInput) {
@@ -117,7 +120,7 @@ export function useMovements(options?: UseMovementsOptions) {
     setStartDate(nextStartDate);
     setEndDate(nextEndDate);
 
-    if (!userProfile?.clinicId || !canUseProfile) {
+    if (!userProfile?.clinicId || userProfile.status !== "active" || !role) {
       setMovements([]);
       return;
     }
@@ -148,3 +151,4 @@ export function useMovements(options?: UseMovementsOptions) {
     filterByDateRange,
   };
 }
+
