@@ -110,7 +110,7 @@ export function ReportsContent() {
           {loading ? <p className="rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">Cargando reporte...</p> : null}
           {!loading && movements.length === 0 ? (
             <div className="rounded-md border border-dashed border-border-soft bg-slate-50 p-6 text-center">
-              <p className="text-sm font-semibold text-slate-800">No hay movimientos en este rango.</p>
+              <p className="text-sm font-semibold text-slate-800">No hay movimientos para este rango de fechas.</p>
               <p className="mt-1 text-sm text-slate-500">Ajusta las fechas o registra un ingreso o gasto para preparar el reporte.</p>
             </div>
           ) : null}

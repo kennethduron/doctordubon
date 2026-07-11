@@ -180,7 +180,7 @@ export function DailyBookContent() {
           {actionError ? <p className="mb-4 rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{actionError}</p> : null}
           {!loading && sortedMovements.length === 0 ? (
             <div className="rounded-md border border-dashed border-border-soft bg-slate-50 p-6 text-center">
-              <p className="text-sm font-semibold text-slate-800">No hay movimientos en este rango.</p>
+              <p className="text-sm font-semibold text-slate-800">No hay movimientos para este rango de fechas.</p>
               <p className="mt-1 text-sm text-slate-500">Registra un ingreso o gasto para verlo en el libro diario.</p>
             </div>
           ) : null}
@@ -260,7 +260,7 @@ export function DailyBookContent() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
           <div className="w-full max-w-md rounded-lg border border-border-soft bg-white p-5 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-950">Eliminar movimiento</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Esta acción marcará el movimiento como eliminado, sin borrarlo físicamente de Firestore.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Esta acción marcará el movimiento como eliminado, sin borrarlo definitivamente del historial.</p>
             <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button type="button" variant="secondary" onClick={() => setDeleteCandidate(null)}>Cancelar</Button>
               <Button type="button" variant="danger" onClick={handleDelete}>Eliminar</Button>

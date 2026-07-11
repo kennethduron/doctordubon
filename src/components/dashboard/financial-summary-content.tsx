@@ -46,15 +46,25 @@ export function FinancialSummaryContent() {
     void loadSummary();
   }, [userProfile?.clinicId, userProfile?.status]);
 
+  const monthIncome = calculateIncomeTotal(monthMovements);
+  const monthExpense = calculateExpenseTotal(monthMovements);
+  const monthBalance = calculateBalance(monthMovements);
+  const maxMonthlyAmount = Math.max(monthIncome, monthExpense, Math.abs(monthBalance), 1);
+  const monthlyBars = [
+    { label: "Ingresos", value: monthIncome, tone: "bg-mint text-mint-strong" },
+    { label: "Gastos", value: monthExpense, tone: "bg-danger-soft text-danger" },
+    { label: "Balance", value: monthBalance, tone: "bg-primary-soft text-primary" },
+  ];
+
   return (
     <>
       {error ? <p className="mb-5 rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{error}</p> : null}
       {loading ? <p className="mb-5 rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">Cargando resumen financiero...</p> : null}
 
       <div className="grid gap-5 md:grid-cols-3">
-        <StatCard title="Total ingresos" value={formatCurrency(calculateIncomeTotal(monthMovements))} helper="Acumulado del mes" tone="income" icon="+" />
-        <StatCard title="Total gastos" value={formatCurrency(calculateExpenseTotal(monthMovements))} helper="Acumulado del mes" tone="expense" icon="-" />
-        <StatCard title="Balance neto" value={formatCurrency(calculateBalance(monthMovements))} helper="Resultado mensual" tone="balance" icon="=" />
+        <StatCard title="Total ingresos" value={formatCurrency(monthIncome)} helper="Acumulado del mes" tone="income" icon="+" />
+        <StatCard title="Total gastos" value={formatCurrency(monthExpense)} helper="Acumulado del mes" tone="expense" icon="-" />
+        <StatCard title="Balance neto" value={formatCurrency(monthBalance)} helper="Resultado mensual" tone="balance" icon="=" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -81,15 +91,30 @@ export function FinancialSummaryContent() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Visual ilustrativo del mes</CardTitle>
-            <CardDescription>Referencia visual; las barras todavía no representan los montos calculados.</CardDescription>
+            <CardTitle>Comparativo del mes</CardTitle>
+            <CardDescription>Vista rápida de ingresos, gastos y balance con los movimientos registrados.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid h-64 items-end gap-4 rounded-md bg-slate-50 p-5 sm:grid-cols-3">
-              <div className="grid gap-2"><div className="h-36 rounded-md bg-mint" /><p className="text-center text-xs font-semibold text-slate-600">Ingresos</p></div>
-              <div className="grid gap-2"><div className="h-28 rounded-md bg-danger-soft" /><p className="text-center text-xs font-semibold text-slate-600">Gastos</p></div>
-              <div className="grid gap-2"><div className="h-20 rounded-md bg-primary-soft" /><p className="text-center text-xs font-semibold text-slate-600">Balance</p></div>
-            </div>
+          <CardContent className="grid gap-4">
+            {monthlyBars.map((bar) => {
+              const width = `${Math.max(6, Math.round((Math.abs(bar.value) / maxMonthlyAmount) * 100))}%`;
+
+              return (
+                <div key={bar.label} className="grid gap-2">
+                  <div className="flex items-center justify-between gap-3 text-sm font-semibold text-slate-700">
+                    <span>{bar.label}</span>
+                    <span>{formatCurrency(bar.value)}</span>
+                  </div>
+                  <div className="h-8 overflow-hidden rounded-md bg-slate-100">
+                    <div className={`h-full rounded-md ${bar.tone}`} style={{ width }} />
+                  </div>
+                </div>
+              );
+            })}
+            {!loading && monthMovements.length === 0 ? (
+              <p className="rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">
+                No hay movimientos registrados este mes.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </div>

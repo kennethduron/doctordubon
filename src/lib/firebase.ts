@@ -63,7 +63,7 @@ export function getFirebaseErrorMessage(
     "validation/missing-name": "Ingrese el nombre completo.",
     "validation/missing-email": "Ingrese el correo.",
     "registration/profile-create-failed":
-      "La cuenta se creó en Firebase Auth, pero no se pudo crear el perfil en Firestore. Revisa las reglas de Firestore.",
+      "La cuenta fue creada, pero no se pudo completar el perfil de acceso. Contacta al encargado del sistema.",
     "registration/verification-email-failed":
       "La cuenta fue creada, pero no se pudo enviar el correo de verificación. Puedes solicitar otro enlace desde la pantalla de acceso.",
     "auth/invalid-credential": "Correo o contraseña incorrectos.",
@@ -74,15 +74,15 @@ export function getFirebaseErrorMessage(
     "auth/email-already-in-use": "Ya existe una cuenta con este correo.",
     "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
     "auth/missing-password": "Ingrese una contraseña.",
-    "auth/operation-not-allowed": "El registro con correo y contraseña no está habilitado en Firebase.",
-    "auth/network-request-failed": "No se pudo conectar con Firebase. Revisa tu conexión.",
+    "auth/operation-not-allowed": "El registro con correo y contraseña no está habilitado. Contacta al encargado del sistema.",
+    "auth/network-request-failed": "No se pudo conectar con el servicio de autenticación. Revisa tu conexión.",
     "auth/unauthorized-domain":
-      "Este dominio no está autorizado en Firebase Authentication. Agrega doctordubon.vercel.app en Authorized domains.",
+      "Este dominio no está autorizado para iniciar sesión. Contacta al encargado del sistema.",
     "auth/user-token-expired": "Tu sesión expiró. Cierra sesión e inicia nuevamente.",
     "auth/requires-recent-login": "Por seguridad, vuelve a iniciar sesión y solicita otro enlace.",
-    "auth/api-key-not-valid": "Firebase no está configurado correctamente.",
-    "auth/invalid-api-key": "Firebase no está configurado correctamente.",
-    "permission-denied": "No tienes permiso para completar esta acción. Revisa las reglas de Firestore.",
+    "auth/api-key-not-valid": "La conexión del sistema no está configurada correctamente.",
+    "auth/invalid-api-key": "La conexión del sistema no está configurada correctamente.",
+    "permission-denied": "No tienes permiso para completar esta acción.",
   };
 
   if (code && messages[code]) {

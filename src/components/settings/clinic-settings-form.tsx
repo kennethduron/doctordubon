@@ -98,7 +98,7 @@ export function ClinicSettingsForm() {
     <Card>
       <CardHeader>
         <CardTitle>Datos del consultorio</CardTitle>
-        <CardDescription>Información base del consultorio almacenada de forma segura en Firestore.</CardDescription>
+        <CardDescription>Información base del consultorio para reportes y uso diario.</CardDescription>
       </CardHeader>
       <CardContent>
         <form className={'grid gap-4'} onSubmit={handleSubmit}>

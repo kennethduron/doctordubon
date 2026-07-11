@@ -37,7 +37,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className={'grid gap-3'}>
               <p className={'break-all text-sm font-semibold text-slate-900'}>{APP_URL}</p>
-              <p className={'text-sm leading-6 text-slate-600'}>Vercel publicará los cambios cuando el repositorio reciba un commit válido.</p>
+              <p className={'text-sm leading-6 text-slate-600'}>Dirección pública del sistema para el consultorio.</p>
             </CardContent>
           </Card>
         </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -125,7 +125,7 @@ export function MovementForm({ mode, disabled = false, successMessage, errorMess
             ) : null}
             <Select id={`${mode}-category`} label="Categoría" options={categoryOptions} value={category} onChange={(event) => setCategory(event.target.value)} disabled={disabled || submitting} />
             <Select id={`${mode}-payment`} label="Método de pago" options={paymentOptions} value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} disabled={disabled || submitting} />
-            <Input id={`${mode}-amount`} label="Monto" type="number" min="0" step="0.01" placeholder="L 0.00" value={amount} onChange={(event) => setAmount(event.target.value)} disabled={disabled || submitting} />
+            <Input id={`${mode}-amount`} label="Monto" type="number" min="0.01" step="0.01" placeholder="L 0.00" value={amount} onChange={(event) => setAmount(event.target.value)} disabled={disabled || submitting} />
             <Input id={`${mode}-description`} label="Descripción" placeholder="Detalle breve del movimiento" value={description} onChange={(event) => setDescription(event.target.value)} disabled={disabled || submitting} />
           </div>
           <Textarea id={`${mode}-notes`} label="Observaciones" placeholder="Notas internas opcionales" value={notes} onChange={(event) => setNotes(event.target.value)} disabled={disabled || submitting} />

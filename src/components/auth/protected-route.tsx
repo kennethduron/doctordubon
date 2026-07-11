@@ -105,7 +105,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         return;
       }
 
-      setVerificationMessage("Tu correo todavía no aparece como verificado. Abre el enlace enviado por Firebase e intenta nuevamente.");
+      setVerificationMessage("Tu correo todavía no aparece como verificado. Abre el enlace de verificación e intenta nuevamente.");
     } catch (error) {
       setVerificationMessage(
         getFirebaseErrorMessage(error, "No se pudo actualizar el estado de verificación. Intenta nuevamente."),

@@ -33,13 +33,13 @@ export function Topbar({ title, subtitle }: TopbarProps) {
 
       <div className={'flex flex-wrap items-center gap-3'}>
         <button
-          className={'flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-md border border-border-soft bg-slate-50 text-sm font-bold text-slate-400'}
+          className={'min-h-10 cursor-not-allowed rounded-md border border-border-soft bg-slate-50 px-3 text-xs font-semibold text-slate-500'}
           type={'button'}
           aria-label={'Notificaciones próximamente'}
           title={'Notificaciones próximamente'}
           disabled
         >
-          !
+          Notificaciones próximamente
         </button>
         <div className={'flex items-center gap-3 rounded-md border border-border-soft bg-white px-3 py-2'}>
           <div className={'flex h-8 w-8 items-center justify-center rounded-md bg-primary-soft text-xs font-bold text-primary'}>
