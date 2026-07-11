@@ -5,6 +5,7 @@
 - [x] Variables reportadas como configuradas en Vercel para Production.
 - [ ] Confirmar variables en Vercel para Preview.
 - [x] URL final esperada: https://doctordubon.vercel.app
+- [x] Hosting definido en Vercel, no Firebase Hosting.
 - [ ] Confirmar dominio autorizado en Firebase Auth: doctordubon.vercel.app
 - [ ] Confirmar build final de Vercel después del próximo push.
 
@@ -12,10 +13,12 @@
 
 - [x] Firebase Authentication integrado en el código.
 - [x] Cloud Firestore integrado en el código.
+- [x] `firebase.json` limitado a reglas e índices de Firestore, sin sección `hosting`.
 - [ ] Publicar o confirmar publicación de `firestore.rules`.
 - [ ] Publicar o confirmar publicación de `firestore.indexes.json`.
 - [ ] Configurar manualmente el primer Técnico operativo en `users/{uid}`.
 - [ ] Confirmar Email/Password habilitado en Firebase Authentication.
+- [ ] FCM/notificaciones push queda como funcionalidad futura, sin implementación actual.
 
 ## Pruebas funcionales
 

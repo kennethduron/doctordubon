@@ -1,6 +1,10 @@
 # Publicar reglas e índices de Cloud Firestore
 
-Vercel publica la aplicación web, pero **no publica las reglas ni los índices de Cloud Firestore automáticamente**. Este paso debe ejecutarse manualmente contra el proyecto Firebase correcto.
+Vercel es el hosting de la aplicación web Next.js y sirve la URL pública `https://doctordubon.vercel.app`.
+
+Firebase no se usa para hosting, dominio ni deploy del frontend. Firebase se usa para Authentication, Cloud Firestore y, en una fase futura, FCM/notificaciones push.
+
+Vercel no publica las reglas ni los índices de Cloud Firestore automáticamente. Este paso debe ejecutarse manualmente contra el proyecto Firebase correcto.
 
 ## 1. Instalar Firebase CLI
 
@@ -41,11 +45,15 @@ Conserva los archivos existentes cuando el asistente pregunte:
 firebase deploy --only firestore:rules
 ```
 
+Este comando solo publica reglas de Cloud Firestore. No publica la app web.
+
 ## 5. Publicar índices
 
 ```bash
 firebase deploy --only firestore:indexes
 ```
+
+Este comando solo publica índices de Cloud Firestore. No publica la app web.
 
 ## 6. Validación posterior obligatoria
 
