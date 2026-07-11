@@ -36,13 +36,21 @@ export default function RegisterPage() {
     setSubmitting(true);
 
     try {
-      await registerWithEmail(name.trim(), email.trim(), password);
+      const result = await registerWithEmail(name.trim(), email.trim(), password);
       await firebaseLogout();
       setName("");
       setEmail("");
       setPassword("");
       setConfirmPassword("");
-      setSuccess("Cuenta creada. Revisa tu correo para verificar la cuenta. Tu acceso quedará pendiente de aprobación.");
+      if (result.verificationEmailSent) {
+        setSuccess(
+          "Cuenta creada correctamente. Te enviamos un correo de verificación. Revisa tu bandeja de entrada, spam o promociones. Después de verificarlo, inicia sesión nuevamente.",
+        );
+      } else {
+        setError(
+          "La cuenta fue creada, pero no se pudo enviar el correo de verificación. Puedes solicitar otro enlace desde la pantalla de acceso.",
+        );
+      }
     } catch (registerError) {
       setError(
         getFirebaseErrorMessage(
@@ -87,4 +95,3 @@ export default function RegisterPage() {
     </main>
   );
 }
-

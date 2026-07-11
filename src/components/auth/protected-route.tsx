@@ -38,7 +38,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, userProfile, profileError, loading, isAuthenticated, logout, refreshUserProfile } = useAuth();
   const router = useRouter();
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+  const [verifiedUidAfterReload, setVerifiedUidAfterReload] = useState<string | null>(null);
   const [sendingVerification, setSendingVerification] = useState(false);
+  const [checkingVerification, setCheckingVerification] = useState(false);
   const [retryingProfile, setRetryingProfile] = useState(false);
 
   useEffect(() => {
@@ -61,6 +63,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return null;
   }
 
+  const isEmailVerified = user.emailVerified || verifiedUidAfterReload === user.uid;
+
   async function handleLogout() {
     await logout();
     router.replace("/login");
@@ -74,11 +78,40 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
     try {
       await sendVerificationEmailIfNeeded(user);
-      setVerificationMessage("Enviamos un nuevo correo de verificación. Revise su bandeja de entrada.");
+      setVerificationMessage("Enlace de verificación enviado. Revisa tu correo, spam o promociones.");
     } catch (error) {
-      setVerificationMessage(getFirebaseErrorMessage(error));
+      setVerificationMessage(
+        getFirebaseErrorMessage(error, "No se pudo enviar el correo de verificación. Intenta nuevamente."),
+      );
     } finally {
       setSendingVerification(false);
+    }
+  }
+
+  async function handleCheckVerification() {
+    if (!user) return;
+
+    setCheckingVerification(true);
+    setVerificationMessage(null);
+
+    try {
+      await user.reload();
+
+      if (user.emailVerified) {
+        setVerifiedUidAfterReload(user.uid);
+        setVerificationMessage("Correo verificado correctamente. Cargando tu acceso...");
+        await refreshUserProfile();
+        router.refresh();
+        return;
+      }
+
+      setVerificationMessage("Tu correo todavía no aparece como verificado. Abre el enlace enviado por Firebase e intenta nuevamente.");
+    } catch (error) {
+      setVerificationMessage(
+        getFirebaseErrorMessage(error, "No se pudo actualizar el estado de verificación. Intenta nuevamente."),
+      );
+    } finally {
+      setCheckingVerification(false);
     }
   }
 
@@ -90,12 +123,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (profileError) {
     return (
-      <CenteredMessage title={'No se pudo cargar tu perfil'} description={profileError}>
-        <div className={'flex flex-col gap-3 sm:flex-row'}>
-          <Button type={'button'} onClick={handleRetryProfile} disabled={retryingProfile}>
-            {retryingProfile ? 'Reintentando...' : 'Reintentar'}
+      <CenteredMessage title={"No se pudo cargar tu perfil"} description={profileError}>
+        <div className={"flex flex-col gap-3 sm:flex-row"}>
+          <Button type={"button"} onClick={handleRetryProfile} disabled={retryingProfile}>
+            {retryingProfile ? "Reintentando..." : "Reintentar"}
           </Button>
-          <Button type={'button'} variant={'secondary'} onClick={handleLogout}>
+          <Button type={"button"} variant={"secondary"} onClick={handleLogout}>
             Cerrar sesión
           </Button>
         </div>
@@ -103,7 +136,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!user.emailVerified) {
+  if (!isEmailVerified) {
     return (
       <CenteredMessage
         title="Verifique su correo"
@@ -111,12 +144,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       >
         <div className="grid gap-4">
           <p className="rounded-md bg-primary-soft p-4 text-sm leading-6 text-primary">
-            Revise el correo {user.email}. Si no encuentra el mensaje, puede solicitar otro enlace de verificación.
+            Revise el correo {user.email}. Si no encuentra el mensaje, revise spam o promociones, o solicite otro enlace.
           </p>
           {verificationMessage ? <p className="text-sm font-medium text-slate-700">{verificationMessage}</p> : null}
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button type="button" onClick={handleSendVerification} disabled={sendingVerification}>
+            <Button type="button" onClick={handleSendVerification} disabled={sendingVerification || checkingVerification}>
               {sendingVerification ? "Enviando..." : "Reenviar verificación"}
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleCheckVerification} disabled={checkingVerification || sendingVerification}>
+              {checkingVerification ? "Verificando..." : "Ya verifiqué mi correo"}
             </Button>
             <Button type="button" variant="secondary" onClick={handleLogout}>
               Cerrar sesión

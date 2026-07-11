@@ -8,12 +8,17 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { CLINIC_ID } from "@/lib/constants";
+import { APP_URL, CLINIC_ID } from "@/lib/constants";
 import { auth, db } from "@/lib/firebase";
 
 function createClientError(code: string) {
   return Object.assign(new Error(code), { code });
 }
+
+const emailActionSettings = {
+  url: `${APP_URL.replace(/\/$/, "")}/login`,
+  handleCodeInApp: false,
+};
 
 export async function loginWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
@@ -54,9 +59,12 @@ export async function registerWithEmail(name: string, email: string, password: s
     throw createClientError("registration/profile-create-failed");
   }
 
-  await sendVerificationEmailIfNeeded(credential.user);
-
-  return credential;
+  try {
+    await sendVerificationEmailIfNeeded(credential.user);
+    return { credential, verificationEmailSent: true };
+  } catch {
+    return { credential, verificationEmailSent: false };
+  }
 }
 
 export async function logout() {
@@ -69,8 +77,9 @@ export async function resetPassword(email: string) {
 
 export async function sendVerificationEmailIfNeeded(user: User) {
   if (user.emailVerified) {
-    return;
+    return false;
   }
 
-  await sendEmailVerification(user);
+  await sendEmailVerification(user, emailActionSettings);
+  return true;
 }

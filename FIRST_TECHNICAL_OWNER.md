@@ -72,3 +72,18 @@ Después de iniciar sesión nuevamente, el usuario debe ver todas las secciones:
 ## Seguridad
 
 Este proceso no modifica las reglas de Firestore y no crea una puerta trasera en el frontend. La promoción inicial se hace desde Firebase Console con acceso administrativo al proyecto.
+## Si Firebase no entrega el correo de verificación
+
+La opción preferida es reenviar el enlace desde la pantalla "Verifique su correo" y revisar la plantilla de Firebase Authentication. También revisa spam y promociones.
+
+Si aun así Firebase no entrega el correo del primer Técnico operativo, se puede marcar el correo como verificado usando Firebase Admin SDK desde una máquina local con credenciales administrativas privadas. No debe hacerse desde el frontend y no debe subirse ninguna credencial al repositorio.
+
+Este proyecto no incluye un script automático porque actualmente no tiene `firebase-admin` instalado ni credenciales administrativas locales. Si se necesita hacerlo manualmente con Admin SDK, el procedimiento seguro es:
+
+1. Crear o descargar una service account del proyecto correcto en Firebase Console.
+2. Guardar el JSON fuera del repositorio.
+3. Definir localmente `GOOGLE_APPLICATION_CREDENTIALS` apuntando a ese JSON.
+4. Usar Firebase Admin SDK para buscar `kennethduron.paz@gmail.com` y ejecutar `updateUser(uid, { emailVerified: true })`.
+5. Cerrar sesión e iniciar sesión de nuevo en `https://doctordubon.vercel.app/login`.
+
+Nunca subas el JSON de la service account ni agregues lógica de verificación forzada en componentes visibles del cliente.
