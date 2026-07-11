@@ -43,17 +43,19 @@ export function StatCard({ title, value, helper, tone = "neutral", icon, accentI
 
   return (
     <Card className={cn("group overflow-hidden transition duration-200 hover:-translate-y-0.5", styles.glow)}>
-      <CardContent className="relative flex items-start justify-between gap-4 p-5 sm:p-6">
-        <div className="min-w-0">
-          <div className={cn("mb-4 flex h-14 w-14 items-center justify-center rounded-full", styles.icon)}>
+      <CardContent className="relative flex h-full min-h-36 flex-col gap-3 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", styles.icon)}>
             {icon ?? <span className="text-lg font-bold">L</span>}
           </div>
-          <p className="text-sm font-semibold text-slate-700">{title}</p>
-          <p className={cn("mt-2 text-3xl font-bold tracking-normal", styles.value)}>{value}</p>
-          <p className="mt-2 text-xs font-medium leading-5 text-slate-500">{helper}</p>
+          <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition group-hover:scale-105", styles.accent)}>
+            {accentIcon ?? "="}
+          </div>
         </div>
-        <div className={cn("mt-5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition group-hover:scale-105", styles.accent)}>
-          {accentIcon ?? "="}
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-slate-700">{title}</p>
+          <p className={cn("mt-1 break-words text-2xl font-bold tracking-normal sm:text-[1.7rem]", styles.value)}>{value}</p>
+          <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-slate-500">{helper}</p>
         </div>
       </CardContent>
     </Card>

@@ -18,7 +18,6 @@ const siteTitle = "Centro Financiero del Consultorio | Dr. Oscar Dubon";
 const siteDescription = "Control diario de ingresos, gastos, libro diario y reportes financieros para el consultorio médico del Dr. Oscar Dubon.";
 const openGraphDescription = "Sistema privado para controlar ingresos, gastos, libro diario y reportes financieros del consultorio médico.";
 const openGraphImage = "/images/doctordubon.jpg";
-const faviconImage = "/images/favicon.jpg";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -29,9 +28,12 @@ export const metadata: Metadata = {
   creator: "Ken Code",
   publisher: "Ken Code",
   icons: {
-    icon: [{ url: faviconImage, type: "image/jpeg" }],
-    shortcut: [{ url: faviconImage, type: "image/jpeg" }],
-    apple: [{ url: faviconImage, type: "image/jpeg" }],
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.webmanifest",
   openGraph: {
