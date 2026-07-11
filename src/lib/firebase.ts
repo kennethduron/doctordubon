@@ -7,7 +7,7 @@ import type { Firestore } from "firebase/firestore";
 
 const fallbackConfig = {
   apiKey: "local-development-placeholder-key",
-  authDomain: "localhost",
+  authDomain: "local-development-placeholder.firebaseapp.com",
   projectId: "local-development-placeholder",
   storageBucket: "local-development-placeholder.appspot.com",
   messagingSenderId: "000000000000",

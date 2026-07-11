@@ -81,8 +81,8 @@ export function FinancialSummaryContent() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Visual del mes</CardTitle>
-            <CardDescription>Vista base para gráfico financiero de la siguiente fase.</CardDescription>
+            <CardTitle>Visual ilustrativo del mes</CardTitle>
+            <CardDescription>Referencia visual; las barras todavía no representan los montos calculados.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid h-64 items-end gap-4 rounded-md bg-slate-50 p-5 sm:grid-cols-3">

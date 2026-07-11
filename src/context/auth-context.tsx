@@ -13,6 +13,7 @@ import type { UserProfile, UserStatus } from "@/types/user";
 type AuthContextValue = {
   user: User | null;
   userProfile: UserProfile | null;
+  profileError: string | null;
   loading: boolean;
   isAuthenticated: boolean;
   role: Role | null;
@@ -21,6 +22,9 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const PROFILE_ERROR_MESSAGE =
+  'No se pudo cargar tu perfil de usuario. Verifica tu conexión o contacta al encargado del sistema.';
 
 function dateValueToString(value: unknown) {
   if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
@@ -97,22 +101,32 @@ async function getOrCreateUserProfile(currentUser: User) {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshUserProfile = useCallback(async () => {
     if (!auth.currentUser) {
       setUserProfile(null);
+      setProfileError(null);
       return;
     }
 
-    const profile = await getOrCreateUserProfile(auth.currentUser);
-    setUserProfile(profile);
+    setProfileError(null);
+
+    try {
+      const profile = await getOrCreateUserProfile(auth.currentUser);
+      setUserProfile(profile);
+    } catch {
+      setUserProfile(null);
+      setProfileError(PROFILE_ERROR_MESSAGE);
+    }
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setLoading(true);
       setUser(currentUser);
+      setProfileError(null);
 
       try {
         if (currentUser) {
@@ -121,6 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setUserProfile(null);
         }
+      } catch {
+        setUserProfile(null);
+        setProfileError(PROFILE_ERROR_MESSAGE);
       } finally {
         setLoading(false);
       }
@@ -133,13 +150,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       userProfile,
+      profileError,
       loading,
       isAuthenticated: Boolean(user),
       role: userProfile?.role ?? null,
       logout: firebaseLogout,
       refreshUserProfile,
     }),
-    [loading, refreshUserProfile, user, userProfile],
+    [loading, profileError, refreshUserProfile, user, userProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

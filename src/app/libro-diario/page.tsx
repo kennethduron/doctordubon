@@ -3,7 +3,7 @@ import { DailyBookContent } from "@/components/movements/daily-book-content";
 
 export default function DailyBookPage() {
   return (
-    <AppShell title="Libro diario" subtitle="Registro central de ingresos y gastos del consultorio." showExports>
+    <AppShell title="Libro diario" subtitle="Registro central de ingresos y gastos del consultorio.">
       <DailyBookContent />
     </AppShell>
   );

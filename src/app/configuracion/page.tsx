@@ -1,75 +1,43 @@
-﻿import { AppShell } from "@/components/layout/app-shell";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { getResendPlaceholder } from "@/lib/resend";
-import { mockClinic } from "@/data/mock-data";
-
-function getFirebaseStatus() {
-  const ready = Boolean(
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
-      process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
-      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-      process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  );
-
-  return {
-    ready,
-    message: ready
-      ? "Firebase Authentication y Cloud Firestore están configurados."
-      : "Configura las variables de Firebase en .env.local para activar Auth y Firestore.",
-  };
-}
+import { AppShell } from '@/components/layout/app-shell';
+import { ClinicSettingsForm } from '@/components/settings/clinic-settings-form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { APP_URL } from '@/lib/constants';
+import { getFirebasePlaceholder } from '@/lib/firebase';
 
 export default function SettingsPage() {
-  const firebase = getFirebaseStatus();
-  const resend = getResendPlaceholder();
+  const systemStatus = getFirebasePlaceholder();
 
   return (
-    <AppShell title="Configuración" subtitle="Datos generales del consultorio y preparación técnica.">
-      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Datos del consultorio</CardTitle>
-            <CardDescription>Información base para reportes, correos y configuración fiscal futura.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="grid gap-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Input id="clinic-name" label="Nombre del consultorio" defaultValue={mockClinic.name} />
-                <Input id="doctor-name" label="Nombre del doctor" defaultValue={mockClinic.doctorName} />
-                <Input id="clinic-email" label="Correo del consultorio" type="email" defaultValue={mockClinic.email} />
-                <Input id="clinic-phone" label="Teléfono" defaultValue={mockClinic.phone} />
-                <Select id="currency" label="Moneda" options={["HNL - Lempiras"]} defaultValue="HNL - Lempiras" />
-              </div>
-              <div className="flex justify-end">
-                <Button type="button">Guardar cambios</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+    <AppShell
+      title={'Configuración'}
+      subtitle={'Datos generales del consultorio para reportes y uso diario.'}
+      allowedRoles={['technical_owner', 'business_owner']}
+    >
+      <div className={'grid gap-6 xl:grid-cols-[1fr_360px]'}>
+        <ClinicSettingsForm />
 
-        <div className="grid gap-6">
+        <div className={'grid gap-6'}>
           <Card>
             <CardHeader>
-              <CardTitle>Firebase</CardTitle>
-              <CardDescription>Auth y Firestore preparados para sesión real.</CardDescription>
+              <CardTitle>Estado del sistema</CardTitle>
+              <CardDescription>Preparación para iniciar sesión y guardar movimientos.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-600">{firebase.message}</p>
-              <p className="mt-3 text-xs font-semibold text-primary">Estado: {firebase.ready ? "Configurado" : "Pendiente"}</p>
+              <p className={'text-sm text-slate-600'}>
+                {systemStatus.ready ? 'El sistema está conectado para operar en producción.' : 'Falta completar la conexión del sistema.'}
+              </p>
+              <p className={'mt-3 text-xs font-semibold text-primary'}>Estado: {systemStatus.ready ? 'Listo' : 'Pendiente'}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Resend</CardTitle>
-              <CardDescription>Correos personalizados pendientes.</CardDescription>
+              <CardTitle>Producción</CardTitle>
+              <CardDescription>Dirección final para el consultorio.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-slate-600">{resend.message}</p>
-              <p className="mt-3 text-xs font-semibold text-primary">Estado: {resend.ready ? "Configurado" : "Pendiente"}</p>
+            <CardContent className={'grid gap-3'}>
+              <p className={'break-all text-sm font-semibold text-slate-900'}>{APP_URL}</p>
+              <p className={'text-sm leading-6 text-slate-600'}>Vercel publicará los cambios cuando el repositorio reciba un commit válido.</p>
             </CardContent>
           </Card>
         </div>

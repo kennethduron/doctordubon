@@ -35,10 +35,11 @@ function CenteredMessage({
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, userProfile, loading, isAuthenticated, logout } = useAuth();
+  const { user, userProfile, profileError, loading, isAuthenticated, logout, refreshUserProfile } = useAuth();
   const router = useRouter();
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
   const [sendingVerification, setSendingVerification] = useState(false);
+  const [retryingProfile, setRetryingProfile] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -79,6 +80,27 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     } finally {
       setSendingVerification(false);
     }
+  }
+
+  async function handleRetryProfile() {
+    setRetryingProfile(true);
+    await refreshUserProfile();
+    setRetryingProfile(false);
+  }
+
+  if (profileError) {
+    return (
+      <CenteredMessage title={'No se pudo cargar tu perfil'} description={profileError}>
+        <div className={'flex flex-col gap-3 sm:flex-row'}>
+          <Button type={'button'} onClick={handleRetryProfile} disabled={retryingProfile}>
+            {retryingProfile ? 'Reintentando...' : 'Reintentar'}
+          </Button>
+          <Button type={'button'} variant={'secondary'} onClick={handleLogout}>
+            Cerrar sesión
+          </Button>
+        </div>
+      </CenteredMessage>
+    );
   }
 
   if (!user.emailVerified) {
@@ -122,11 +144,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
       <CenteredMessage
         title="Cuenta pendiente de aprobación"
-        description="Su cuenta fue creada correctamente, pero todavía requiere aprobación para entrar al sistema."
+        description="Tu cuenta está pendiente de aprobación. Un responsable del consultorio debe aprobar tu acceso antes de ingresar al sistema."
       >
         <div className="grid gap-4">
           <p className="rounded-md bg-primary-soft p-4 text-sm leading-6 text-primary">
-            Cuando el Dueño operativo o el Técnico operativo apruebe la cuenta, podrá acceder al dashboard financiero.
+            Si crees que esto es un error, contacta al encargado del sistema.
           </p>
           <Button type="button" variant="secondary" onClick={handleLogout}>
             Cerrar sesión

@@ -3,6 +3,7 @@ import type { PermissionNote } from "@/types/role";
 
 export const CLINIC_ID = "clinic_dr_oscar_dubon";
 export const CLINIC_NAME = process.env.NEXT_PUBLIC_CLINIC_NAME ?? "Consultorio Dr. Oscar Dubon";
+export const DOCTOR_NAME = process.env.NEXT_PUBLIC_DOCTOR_NAME ?? "Dr. Oscar Dubon";
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Centro Financiero del Consultorio";
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://doctordubon.vercel.app";
 export const APP_DESCRIPTION = "Control diario de ingresos y gastos del consultorio médico.";

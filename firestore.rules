@@ -1,4 +1,4 @@
-﻿rules_version = '2';
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -23,19 +23,27 @@ service cloud.firestore {
     }
 
     function activeUser() {
-      return hasProfile() && userDoc().data.status == "active";
+      return hasProfile() && userDoc().data.status == 'active';
     }
 
     function technicalOwner() {
-      return activeUser() && role() == "technical_owner";
+      return activeUser() && role() == 'technical_owner';
     }
 
     function businessOwner() {
-      return activeUser() && role() == "business_owner";
+      return activeUser() && role() == 'business_owner';
     }
 
     function admin() {
-      return activeUser() && role() == "admin";
+      return activeUser() && role() == 'admin';
+    }
+
+    function canManageUsers() {
+      return technicalOwner() || businessOwner();
+    }
+
+    function canManageClinic() {
+      return technicalOwner() || businessOwner();
     }
 
     function canCreateMovement() {
@@ -54,58 +62,191 @@ service cloud.firestore {
       return activeUser() && request.resource.data.clinicId == clinicId();
     }
 
+    function validRole(value) {
+      return value in ['technical_owner', 'business_owner', 'admin'];
+    }
+
+    function validUserStatus(value) {
+      return value in ['active', 'pending', 'disabled'];
+    }
+
+    function validMovementRecord(data) {
+      return data.keys().hasAll([
+          'id', 'clinicId', 'type', 'category', 'paymentMethod', 'amount',
+          'description', 'date', 'status', 'createdBy', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'clinicId', 'type', 'category', 'paymentMethod', 'amount',
+          'description', 'notes', 'date', 'status', 'createdBy', 'createdByName',
+          'createdAt', 'updatedAt', 'updatedBy', 'deletedAt', 'deletedBy'
+        ])
+        && data.id is string
+        && data.clinicId is string
+        && data.type in ['income', 'expense']
+        && data.category is string
+        && data.paymentMethod in ['efectivo', 'transferencia', 'tarjeta', 'otro']
+        && data.amount is number
+        && data.amount > 0
+        && data.description is string
+        && (!('notes' in data) || data.notes is string)
+        && data.date is string
+        && data.status in ['active', 'edited', 'deleted']
+        && data.createdBy is string;
+    }
+
+    function validNewMovement(data, movementId) {
+      return validMovementRecord(data)
+        && data.keys().hasOnly([
+          'id', 'clinicId', 'type', 'category', 'paymentMethod', 'amount',
+          'description', 'notes', 'date', 'status', 'createdBy', 'createdByName',
+          'createdAt', 'updatedAt'
+        ])
+        && data.id == movementId
+        && data.status == 'active'
+        && data.createdBy == request.auth.uid
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function validClinicRecord(data) {
+      return data.keys().hasAll([
+          'clinicName', 'doctorName', 'email', 'phone', 'currency',
+          'appUrl', 'updatedAt', 'updatedBy'
+        ])
+        && data.keys().hasOnly([
+          'clinicName', 'doctorName', 'email', 'phone', 'currency',
+          'appUrl', 'updatedAt', 'updatedBy'
+        ])
+        && data.clinicName is string
+        && data.doctorName is string
+        && data.email is string
+        && data.phone is string
+        && data.currency == 'HNL'
+        && data.appUrl is string
+        && data.updatedBy == request.auth.uid
+        && data.updatedAt == request.time;
+    }
+
     match /users/{userId} {
-      allow read: if activeUser() && resource.data.clinicId == clinicId();
+      // Pending y disabled solo pueden leer su propio perfil. Los responsables
+      // activos pueden consultar usuarios de su misma clínica.
+      allow get: if signedIn() && (
+        request.auth.uid == userId
+        || (canManageUsers() && resource.data.clinicId == clinicId())
+      );
+      allow list: if canManageUsers() && sameClinicResource();
+
       allow create: if signedIn()
         && request.auth.uid == userId
+        && request.resource.data.keys().hasAll([
+          'id', 'clinicId', 'name', 'email', 'role', 'status', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'id', 'clinicId', 'name', 'email', 'role', 'status', 'createdAt', 'updatedAt'
+        ])
         && request.resource.data.id == userId
-        && request.resource.data.role == "admin"
-        && request.resource.data.status == "pending";
-      allow update: if activeUser()
+        && request.resource.data.clinicId == 'clinic_dr_oscar_dubon'
+        && request.resource.data.name is string
+        && request.resource.data.email is string
+        && request.resource.data.role == 'admin'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // El Dueño operativo solo puede aprobar o deshabilitar administradores.
+      allow update: if businessOwner()
         && resource.data.clinicId == clinicId()
         && request.resource.data.clinicId == resource.data.clinicId
+        && resource.data.role == 'admin'
+        && request.resource.data.role == 'admin'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time
         && (
-          technicalOwner()
+          (resource.data.status == 'pending' && request.resource.data.status == 'active')
+          || (resource.data.status != 'disabled' && request.resource.data.status == 'disabled')
+        );
+
+      // Un Técnico puede gestionar roles y estados de su clínica. Si se gestiona
+      // a sí mismo debe conservar rol Técnico y estado activo; así siempre queda
+      // al menos el Técnico que autoriza la operación.
+      allow update: if technicalOwner()
+        && resource.data.clinicId == clinicId()
+        && request.resource.data.clinicId == resource.data.clinicId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'status', 'updatedAt'])
+        && validRole(request.resource.data.role)
+        && validUserStatus(request.resource.data.status)
+        && request.resource.data.updatedAt == request.time
+        && (
+          request.auth.uid != userId
           || (
-            businessOwner()
-            && resource.data.role != "technical_owner"
-            && request.resource.data.role != "technical_owner"
-          )
-          || (
-            request.auth.uid == userId
-            && request.resource.data.role == resource.data.role
-            && request.resource.data.status == resource.data.status
+            request.resource.data.role == 'technical_owner'
+            && request.resource.data.status == 'active'
           )
         );
-      allow delete: if technicalOwner() && resource.data.role != "technical_owner";
+
+      allow delete: if false;
     }
 
     match /movements/{movementId} {
       allow read: if sameClinicResource();
       allow create: if canCreateMovement()
         && sameClinicRequest()
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == "active"
-        && request.resource.data.type in ["income", "expense"];
+        && validNewMovement(request.resource.data, movementId);
+
+      // Edición normal: solo responsables operativos, campos financieros
+      // controlados y metadatos inmutables.
       allow update: if sameClinicResource()
         && canEditMovement()
+        && resource.data.status in ['active', 'edited']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'type', 'category', 'paymentMethod', 'amount', 'description', 'notes',
+          'date', 'status', 'updatedAt', 'updatedBy'
+        ])
+        && request.resource.data.status == 'edited'
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
         && request.resource.data.clinicId == resource.data.clinicId
         && request.resource.data.createdBy == resource.data.createdBy
-        && request.resource.data.createdAt == resource.data.createdAt;
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validMovementRecord(request.resource.data);
+
+      // Eliminación lógica: nunca borra el documento y solo cambia estado y
+      // metadatos de auditoría.
+      allow update: if sameClinicResource()
+        && canEditMovement()
+        && resource.data.status in ['active', 'edited']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'deletedAt', 'deletedBy', 'updatedAt'
+        ])
+        && request.resource.data.status == 'deleted'
+        && request.resource.data.deletedBy == request.auth.uid
+        && request.resource.data.deletedAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.clinicId == resource.data.clinicId
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validMovementRecord(request.resource.data);
+
       allow delete: if false;
     }
 
     match /clinics/{clinicIdDocument} {
-      allow read: if activeUser() && clinicIdDocument == clinicId();
-      allow create, update: if technicalOwner() && clinicIdDocument == clinicId();
+      allow read: if canManageClinic() && clinicIdDocument == clinicId();
+      allow create, update: if canManageClinic()
+        && clinicIdDocument == clinicId()
+        && validClinicRecord(request.resource.data);
       allow delete: if false;
     }
 
     match /invitations/{invitationId} {
-      allow read: if activeUser() && resource.data.clinicId == clinicId();
-      allow create: if technicalOwner() || businessOwner();
-      allow update: if technicalOwner() || businessOwner();
-      allow delete: if technicalOwner();
+      allow read: if canManageUsers() && resource.data.clinicId == clinicId();
+      allow create: if canManageUsers()
+        && request.resource.data.clinicId is string
+        && request.resource.data.clinicId == clinicId();
+      allow update: if canManageUsers()
+        && resource.data.clinicId == clinicId()
+        && request.resource.data.clinicId == resource.data.clinicId;
+      allow delete: if false;
     }
   }
 }

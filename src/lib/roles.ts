@@ -10,7 +10,19 @@ export function canManageUsers(role?: Role | null) {
   return role === "technical_owner" || role === "business_owner";
 }
 
+export function canApproveUsers(role?: Role | null) {
+  return role === "technical_owner" || role === "business_owner";
+}
+
+export function canDisableUsers(role?: Role | null) {
+  return role === "technical_owner" || role === "business_owner";
+}
+
 export function canAssignRoles(role?: Role | null) {
+  return role === "technical_owner";
+}
+
+export function isCriticalRole(role?: Role | null) {
   return role === "technical_owner";
 }
 

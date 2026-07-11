@@ -17,10 +17,18 @@ const navigation = [
   { href: "/configuracion", label: "Configuración", icon: "C" },
 ];
 
+export function getNavigationForRole(role?: import('@/types/role').Role | null) {
+  if (role === 'admin') {
+    return navigation.filter((item) => item.href !== '/usuarios' && item.href !== '/configuracion');
+  }
+
+  return navigation;
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, role } = useAuth();
 
   async function handleLogout() {
     await logout();
@@ -41,7 +49,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 px-4 py-5">
-        {navigation.map((item) => {
+        {getNavigationForRole(role).map((item) => {
           const active = pathname === item.href;
 
           return (

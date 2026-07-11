@@ -12,10 +12,10 @@ import { getCurrentMonthMovements, getRecentMovements, getTodayMovements } from 
 import type { Movement } from "@/types/movement";
 
 const quickActions = [
-  { href: "/ingresos", label: "Nuevo ingreso" },
-  { href: "/gastos", label: "Nuevo gasto" },
-  { href: "/libro-diario", label: "Ver libro diario" },
-  { href: "/reportes", label: "Ver reportes" },
+  { href: "/ingresos", label: "Nuevo ingreso", variant: "primary" as const },
+  { href: "/gastos", label: "Nuevo gasto", variant: "secondary" as const },
+  { href: "/libro-diario", label: "Ver libro diario", variant: "secondary" as const },
+  { href: "/reportes", label: "Ver reportes", variant: "secondary" as const },
 ];
 
 export function DashboardContent() {
@@ -60,15 +60,31 @@ export function DashboardContent() {
   const monthIncome = calculateIncomeTotal(monthMovements);
   const monthExpense = calculateExpenseTotal(monthMovements);
   const monthRange = getMonthDateRange();
+  const hasMovements = monthMovements.length > 0 || recentMovements.length > 0;
 
   return (
     <>
       {error ? <p className="mb-5 rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{error}</p> : null}
       {loading ? <p className="mb-5 rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">Cargando información financiera...</p> : null}
 
+      {!loading && !hasMovements ? (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Comienza el registro financiero</CardTitle>
+            <CardDescription>Agrega el primer ingreso o gasto para ver el resumen del consultorio.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Link href="/ingresos" className={buttonStyles("primary", "w-full justify-center")}>Nuevo ingreso</Link>
+            <Link href="/gastos" className={buttonStyles("secondary", "w-full justify-center")}>Nuevo gasto</Link>
+            <Link href="/libro-diario" className={buttonStyles("secondary", "w-full justify-center")}>Ver libro diario</Link>
+            <Link href="/reportes" className={buttonStyles("secondary", "w-full justify-center")}>Ver reportes</Link>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <StatCard title="Ingresos de hoy" value={formatCurrency(todayIncome)} helper={todayMovements.length ? "Movimientos registrados hoy" : "No hay movimientos registrados hoy"} tone="income" icon="+" />
-        <StatCard title="Gastos de hoy" value={formatCurrency(todayExpense)} helper="Salidas registradas hoy" tone="expense" icon="-" />
+        <StatCard title="Ingresos de hoy" value={formatCurrency(todayIncome)} helper={todayMovements.length ? "Movimientos registrados hoy" : "No hay ingresos registrados hoy"} tone="income" icon="+" />
+        <StatCard title="Gastos de hoy" value={formatCurrency(todayExpense)} helper={todayExpense > 0 ? "Salidas registradas hoy" : "No hay gastos registrados hoy"} tone="expense" icon="-" />
         <StatCard title="Balance del día" value={formatCurrency(calculateBalance(todayMovements))} helper="Ingresos menos gastos" tone="balance" icon="=" />
         <StatCard title="Ingresos del mes" value={formatCurrency(monthIncome)} helper={`Desde ${monthRange.startDate}`} tone="income" icon="+" />
         <StatCard title="Gastos del mes" value={formatCurrency(monthExpense)} helper={`Hasta ${monthRange.endDate}`} tone="expense" icon="-" />
@@ -82,9 +98,9 @@ export function DashboardContent() {
             <CardTitle>Acciones rápidas</CardTitle>
             <CardDescription>Atajos para registrar y consultar información.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-3">
+          <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             {quickActions.map((action) => (
-              <Link key={action.href} href={action.href} className={buttonStyles("secondary", "w-full justify-center")}>
+              <Link key={action.href} href={action.href} className={buttonStyles(action.variant, "w-full justify-center")}>
                 {action.label}
               </Link>
             ))}
@@ -94,4 +110,3 @@ export function DashboardContent() {
     </>
   );
 }
-
