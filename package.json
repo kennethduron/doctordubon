@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "bootstrap:technical-owner": "node scripts/bootstrap-technical-owner.mjs"
+    "bootstrap:technical-owner": "node scripts/bootstrap-technical-owner.mjs",
+    "test:acceptance": "playwright test",
+    "test:acceptance:headed": "playwright test --headed"
   },
   "dependencies": {
     "firebase": "^12.16.0",
@@ -20,6 +22,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
