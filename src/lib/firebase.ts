@@ -28,6 +28,8 @@ export function isFirebaseConfigured() {
     process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
       process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
       process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET &&
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID &&
       process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   );
 }
@@ -46,12 +48,22 @@ export function getFirebasePlaceholder() {
   };
 }
 
-export function getFirebaseErrorMessage(error: unknown) {
-  if (!(error instanceof FirebaseError)) {
-    return "Ocurrió un error inesperado. Intente nuevamente.";
-  }
+export function getFirebaseErrorMessage(
+  error: unknown,
+  fallbackMessage = "No se pudo completar la acción. Intenta nuevamente.",
+) {
+  const code =
+    error instanceof FirebaseError
+      ? error.code
+      : typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+        ? error.code
+        : null;
 
   const messages: Record<string, string> = {
+    "validation/missing-name": "Ingrese el nombre completo.",
+    "validation/missing-email": "Ingrese el correo.",
+    "registration/profile-create-failed":
+      "La cuenta se creó en Firebase Auth, pero no se pudo crear el perfil en Firestore. Revisa las reglas de Firestore.",
     "auth/invalid-credential": "Correo o contraseña incorrectos.",
     "auth/user-not-found": "No existe una cuenta con este correo.",
     "auth/wrong-password": "La contraseña es incorrecta.",
@@ -60,11 +72,18 @@ export function getFirebaseErrorMessage(error: unknown) {
     "auth/email-already-in-use": "Ya existe una cuenta con este correo.",
     "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
     "auth/missing-password": "Ingrese una contraseña.",
-    "auth/network-request-failed": "No se pudo conectar con Firebase. Revise su conexión.",
+    "auth/operation-not-allowed": "El registro con correo y contraseña no está habilitado en Firebase.",
+    "auth/network-request-failed": "No se pudo conectar con Firebase. Revisa tu conexión e intenta de nuevo.",
+    "auth/unauthorized-domain":
+      "Este dominio no está autorizado en Firebase Authentication. Agrega doctordubon.vercel.app en Authorized domains.",
     "auth/api-key-not-valid": "Firebase no está configurado correctamente.",
     "auth/invalid-api-key": "Firebase no está configurado correctamente.",
-    "permission-denied": "No tiene permisos para realizar esta acción.",
+    "permission-denied": "No tienes permiso para completar esta acción. Revisa las reglas de Firestore.",
   };
 
-  return messages[error.code] ?? "No se pudo completar la acción. Intente nuevamente.";
+  if (code && messages[code]) {
+    return messages[code];
+  }
+
+  return fallbackMessage;
 }

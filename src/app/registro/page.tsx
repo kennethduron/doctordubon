@@ -42,9 +42,14 @@ export default function RegisterPage() {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
-      setSuccess("Cuenta creada correctamente. Revise su correo para verificarlo. La cuenta puede requerir aprobación antes de acceder.");
+      setSuccess("Cuenta creada. Revisa tu correo para verificar la cuenta. Tu acceso quedará pendiente de aprobación.");
     } catch (registerError) {
-      setError(getFirebaseErrorMessage(registerError));
+      setError(
+        getFirebaseErrorMessage(
+          registerError,
+          "No se pudo crear la cuenta. Intenta nuevamente o contacta al encargado del sistema.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }

@@ -11,24 +11,48 @@ import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { CLINIC_ID } from "@/lib/constants";
 import { auth, db } from "@/lib/firebase";
 
+function createClientError(code: string) {
+  return Object.assign(new Error(code), { code });
+}
+
 export async function loginWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
 }
 
 export async function registerWithEmail(name: string, email: string, password: string) {
-  const credential = await createUserWithEmailAndPassword(auth, email, password);
+  const cleanName = name.trim();
+  const cleanEmail = email.trim();
 
-  await updateProfile(credential.user, { displayName: name });
-  await setDoc(doc(db, "users", credential.user.uid), {
-    id: credential.user.uid,
-    clinicId: CLINIC_ID,
-    name,
-    email: credential.user.email ?? email,
-    role: "admin",
-    status: "pending",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  if (!cleanName) {
+    throw createClientError("validation/missing-name");
+  }
+
+  if (!cleanEmail) {
+    throw createClientError("validation/missing-email");
+  }
+
+  if (!password) {
+    throw createClientError("auth/missing-password");
+  }
+
+  const credential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+
+  await updateProfile(credential.user, { displayName: cleanName });
+
+  try {
+    await setDoc(doc(db, "users", credential.user.uid), {
+      id: credential.user.uid,
+      clinicId: CLINIC_ID,
+      name: cleanName,
+      email: credential.user.email ?? cleanEmail,
+      role: "admin",
+      status: "pending",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch {
+    throw createClientError("registration/profile-create-failed");
+  }
 
   await sendVerificationEmailIfNeeded(credential.user);
 
