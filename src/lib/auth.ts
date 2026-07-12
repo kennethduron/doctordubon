@@ -1,4 +1,4 @@
-﻿import type { User } from "firebase/auth";
+import type { User } from "firebase/auth";
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -8,7 +8,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { APP_URL, CLINIC_ID } from "@/lib/constants";
+import { CLINIC_ID } from "@/lib/constants";
 import { auth, db } from "@/lib/firebase";
 
 function createClientError(code: string) {
@@ -16,16 +16,36 @@ function createClientError(code: string) {
 }
 
 const emailActionSettings = {
-  url: `${APP_URL.replace(/\/$/, "")}/login`,
+  url: "https://doctordubon.vercel.app/login",
   handleCodeInApp: false,
 };
+
+const usernamePattern = /^[a-z0-9._-]{3,30}$/;
+
+export function normalizeUsername(username: string) {
+  return username.trim().toLowerCase();
+}
+
+export function getUsernameValidationMessage(username: string) {
+  const cleanUsername = normalizeUsername(username);
+
+  if (!cleanUsername) return "Ingrese un usuario.";
+  if (cleanUsername.length < 3) return "El usuario debe tener al menos 3 caracteres.";
+  if (cleanUsername.length > 30) return "El usuario no puede tener más de 30 caracteres.";
+  if (!usernamePattern.test(cleanUsername)) {
+    return "El usuario solo puede contener letras, números, punto, guion bajo o guion medio.";
+  }
+
+  return null;
+}
 
 export async function loginWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
 }
 
-export async function registerWithEmail(name: string, email: string, password: string) {
+export async function registerWithEmail(name: string, username: string, email: string, password: string) {
   const cleanName = name.trim();
+  const cleanUsername = normalizeUsername(username);
   const cleanEmail = email.trim();
 
   if (!cleanName) {
@@ -34,6 +54,10 @@ export async function registerWithEmail(name: string, email: string, password: s
 
   if (!cleanEmail) {
     throw createClientError("validation/missing-email");
+  }
+
+  if (getUsernameValidationMessage(cleanUsername)) {
+    throw createClientError("validation/invalid-username");
   }
 
   if (!password) {
@@ -49,6 +73,7 @@ export async function registerWithEmail(name: string, email: string, password: s
       id: credential.user.uid,
       clinicId: CLINIC_ID,
       name: cleanName,
+      username: cleanUsername,
       email: credential.user.email ?? cleanEmail,
       role: "admin",
       status: "pending",
@@ -72,7 +97,7 @@ export async function logout() {
 }
 
 export async function resetPassword(email: string) {
-  return sendPasswordResetEmail(auth, email);
+  return sendPasswordResetEmail(auth, email, emailActionSettings);
 }
 
 export async function sendVerificationEmailIfNeeded(user: User) {

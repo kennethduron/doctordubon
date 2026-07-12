@@ -139,14 +139,16 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.auth.uid == userId
         && request.resource.data.keys().hasAll([
-          'id', 'clinicId', 'name', 'email', 'role', 'status', 'createdAt', 'updatedAt'
+          'id', 'clinicId', 'name', 'username', 'email', 'role', 'status', 'createdAt', 'updatedAt'
         ])
         && request.resource.data.keys().hasOnly([
-          'id', 'clinicId', 'name', 'email', 'role', 'status', 'createdAt', 'updatedAt'
+          'id', 'clinicId', 'name', 'username', 'email', 'role', 'status', 'createdAt', 'updatedAt'
         ])
         && request.resource.data.id == userId
         && request.resource.data.clinicId == 'clinic_dr_oscar_dubon'
         && request.resource.data.name is string
+        && request.resource.data.username is string
+        && request.resource.data.username.matches('^[a-z0-9._-]{3,30}$')
         && request.resource.data.email is string
         && request.resource.data.role == 'admin'
         && request.resource.data.status == 'pending'

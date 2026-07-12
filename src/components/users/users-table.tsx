@@ -252,6 +252,7 @@ export function UsersTable() {
                             <thead>
                               <tr>
                                 <Th>Nombre</Th>
+                                <Th>Usuario</Th>
                                 <Th>Correo</Th>
                                 <Th>Rol</Th>
                                 <Th>Estado</Th>
@@ -263,6 +264,7 @@ export function UsersTable() {
                               {groupUsers.map((user) => (
                                 <tr key={user.id}>
                                   <Td className="font-medium text-slate-900">{user.name}</Td>
+                                  <Td className="font-medium text-primary">@{user.username}</Td>
                                   <Td>{user.email}</Td>
                                   <Td>{renderRole(user)}</Td>
                                   <Td><Badge variant={statusBadgeVariant(user.status)}>{statusLabels[user.status]}</Badge></Td>
@@ -280,6 +282,7 @@ export function UsersTable() {
                               <div className="flex items-start justify-between gap-3">
                                 <div>
                                   <p className="text-sm font-semibold text-slate-900">{user.name}</p>
+                                  <p className="mt-1 text-xs font-semibold text-primary">@{user.username}</p>
                                   <p className="mt-1 text-xs text-slate-500">{user.email}</p>
                                 </div>
                                 <Badge variant={statusBadgeVariant(user.status)}>{statusLabels[user.status]}</Badge>
@@ -314,6 +317,7 @@ export function UsersTable() {
             </div>
             <dl className="mt-5 grid gap-3 text-sm text-slate-700">
               <div><dt className="font-semibold text-slate-900">Nombre</dt><dd>{detailUser.name}</dd></div>
+              <div><dt className="font-semibold text-slate-900">Usuario</dt><dd>@{detailUser.username}</dd></div>
               <div><dt className="font-semibold text-slate-900">Correo</dt><dd>{detailUser.email}</dd></div>
               <div><dt className="font-semibold text-slate-900">Rol</dt><dd>{roleLabels[detailUser.role]}</dd></div>
               <div><dt className="font-semibold text-slate-900">Fecha de creación</dt><dd>{formatDate(detailUser.createdAt)}</dd></div>

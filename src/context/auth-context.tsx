@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
@@ -54,11 +54,22 @@ function normalizeRole(role: unknown): Role {
   return "admin";
 }
 
+function fallbackUsername(currentUser: User) {
+  const emailPrefix = currentUser.email?.split("@")[0] ?? "";
+  const cleanPrefix = emailPrefix.toLowerCase().replace(/[^a-z0-9._-]/g, "-").slice(0, 30);
+
+  if (cleanPrefix.length >= 3) return cleanPrefix;
+  return `usuario-${currentUser.uid.slice(0, 8).toLowerCase()}`;
+}
+
 function normalizeProfile(data: Record<string, unknown>, fallbackUser: User): UserProfile {
   return {
     id: typeof data.id === "string" ? data.id : fallbackUser.uid,
     clinicId: typeof data.clinicId === "string" ? data.clinicId : CLINIC_ID,
     name: typeof data.name === "string" ? data.name : fallbackUser.displayName ?? "Usuario del consultorio",
+    username: typeof data.username === "string" && data.username.trim()
+      ? data.username.trim().toLowerCase()
+      : fallbackUsername(fallbackUser),
     email: typeof data.email === "string" ? data.email : fallbackUser.email ?? "",
     role: normalizeRole(data.role),
     status: normalizeStatus(data.status),
@@ -80,6 +91,7 @@ async function getOrCreateUserProfile(currentUser: User) {
     id: currentUser.uid,
     clinicId: CLINIC_ID,
     name: currentUser.displayName ?? "Usuario del consultorio",
+    username: fallbackUsername(currentUser),
     email: currentUser.email ?? "",
     role: "admin",
     status: "pending",

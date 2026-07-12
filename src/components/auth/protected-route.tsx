@@ -1,36 +1,38 @@
 "use client";
 
+import { MailCheck, ShieldCheck, UserRoundX } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AppLoading } from "@/components/ui/app-loading";
 import { useAuth } from "@/context/auth-context";
-import { getFirebaseErrorMessage } from "@/lib/firebase";
 import { sendVerificationEmailIfNeeded } from "@/lib/auth";
+import { APP_NAME } from "@/lib/constants";
+import { getFirebaseErrorMessage } from "@/lib/firebase";
 
 type ProtectedRouteProps = {
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 function CenteredMessage({
   title,
   description,
+  icon,
   children,
 }: {
   title: string;
   description: string;
-  children?: React.ReactNode;
+  icon: ReactNode;
+  children?: ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>{children}</CardContent>
-      </Card>
-    </main>
+    <AuthShell title={title} eyebrow={APP_NAME} description={description}>
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary-soft text-primary">
+        {icon}
+      </div>
+      {children}
+    </AuthShell>
   );
 }
 
@@ -50,13 +52,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }, [isAuthenticated, loading, router]);
 
   if (loading) {
-    return (
-      <CenteredMessage title="Cargando sesión" description="Estamos verificando su acceso al sistema financiero.">
-        <div className="h-2 overflow-hidden rounded-full bg-primary-soft">
-          <div className="h-full w-1/2 rounded-full bg-primary" />
-        </div>
-      </CenteredMessage>
-    );
+    return <AppLoading />;
   }
 
   if (!isAuthenticated || !user) {
@@ -99,13 +95,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
       if (user.emailVerified) {
         setVerifiedUidAfterReload(user.uid);
-        setVerificationMessage("Correo verificado correctamente. Cargando tu acceso...");
+        setVerificationMessage("Correo verificado correctamente. Preparando tu acceso...");
         await refreshUserProfile();
         router.refresh();
         return;
       }
 
-      setVerificationMessage("Tu correo todavía no aparece como verificado. Abre el enlace de verificación e intenta nuevamente.");
+      setVerificationMessage("Tu correo todavía no aparece como verificado. Abre el enlace recibido e intenta nuevamente.");
     } catch (error) {
       setVerificationMessage(
         getFirebaseErrorMessage(error, "No se pudo actualizar el estado de verificación. Intenta nuevamente."),
@@ -123,14 +119,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (profileError) {
     return (
-      <CenteredMessage title={"No se pudo cargar tu perfil"} description={profileError}>
-        <div className={"flex flex-col gap-3 sm:flex-row"}>
-          <Button type={"button"} onClick={handleRetryProfile} disabled={retryingProfile}>
+      <CenteredMessage
+        title="No se pudo cargar tu perfil"
+        description="Intenta nuevamente o contacta al encargado del sistema."
+        icon={<UserRoundX aria-hidden="true" size={28} />}
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Button type="button" onClick={handleRetryProfile} disabled={retryingProfile}>
             {retryingProfile ? "Reintentando..." : "Reintentar"}
           </Button>
-          <Button type={"button"} variant={"secondary"} onClick={handleLogout}>
-            Cerrar sesión
-          </Button>
+          <Button type="button" variant="secondary" onClick={handleLogout}>Cerrar sesión</Button>
         </div>
       </CenteredMessage>
     );
@@ -139,25 +137,29 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!isEmailVerified) {
     return (
       <CenteredMessage
-        title="Verifique su correo"
-        description="Antes de entrar al sistema debe confirmar el correo asociado a su cuenta."
+        title="Verifica tu correo"
+        description="Antes de ingresar al sistema, debes verificar el correo asociado a tu cuenta. Revisa tu bandeja de entrada, spam o promociones."
+        icon={<MailCheck aria-hidden="true" size={28} />}
       >
         <div className="grid gap-4">
-          <p className="rounded-md bg-primary-soft p-4 text-sm leading-6 text-primary">
-            Revise el correo {user.email}. Si no encuentra el mensaje, revise spam o promociones, o solicite otro enlace.
-          </p>
-          {verificationMessage ? <p className="text-sm font-medium text-slate-700">{verificationMessage}</p> : null}
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="rounded-lg bg-primary-soft p-4 text-sm leading-6 text-primary">
+            <p>Enviamos el enlace a <strong>{user.email}</strong>.</p>
+            <p className="mt-2">Si el enlace venció, solicita uno nuevo desde esta pantalla.</p>
+          </div>
+          {verificationMessage ? (
+            <p className="rounded-md border border-border-soft bg-slate-50 p-3 text-sm font-medium text-slate-700">
+              {verificationMessage}
+            </p>
+          ) : null}
+          <div className="grid gap-3 sm:grid-cols-2">
             <Button type="button" onClick={handleSendVerification} disabled={sendingVerification || checkingVerification}>
               {sendingVerification ? "Enviando..." : "Reenviar verificación"}
             </Button>
             <Button type="button" variant="secondary" onClick={handleCheckVerification} disabled={checkingVerification || sendingVerification}>
               {checkingVerification ? "Verificando..." : "Ya verifiqué mi correo"}
             </Button>
-            <Button type="button" variant="secondary" onClick={handleLogout}>
-              Cerrar sesión
-            </Button>
           </div>
+          <Button type="button" variant="subtle" onClick={handleLogout}>Cerrar sesión</Button>
         </div>
       </CenteredMessage>
     );
@@ -167,11 +169,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
       <CenteredMessage
         title="Cuenta deshabilitada"
-        description="Esta cuenta no tiene acceso al sistema. Contacte al Técnico operativo o al Dueño operativo."
+        description="Esta cuenta no tiene acceso activo. Contacta al Técnico operativo o al Dueño operativo."
+        icon={<UserRoundX aria-hidden="true" size={28} />}
       >
-        <Button type="button" variant="secondary" onClick={handleLogout}>
-          Cerrar sesión
-        </Button>
+        <Button type="button" className="w-full" variant="secondary" onClick={handleLogout}>Cerrar sesión</Button>
       </CenteredMessage>
     );
   }
@@ -181,14 +182,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       <CenteredMessage
         title="Cuenta pendiente de aprobación"
         description="Tu cuenta está pendiente de aprobación. El Técnico operativo o el Dueño operativo debe activar tu acceso antes de ingresar al sistema."
+        icon={<ShieldCheck aria-hidden="true" size={28} />}
       >
         <div className="grid gap-4">
-          <p className="rounded-md bg-primary-soft p-4 text-sm leading-6 text-primary">
-            Si crees que esto es un error, contacta al encargado del sistema.
+          <p className="rounded-lg bg-primary-soft p-4 text-sm leading-6 text-primary">
+            Cuando tu acceso sea aprobado, podrás iniciar sesión normalmente.
           </p>
-          <Button type="button" variant="secondary" onClick={handleLogout}>
-            Cerrar sesión
-          </Button>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Button type="button" onClick={handleRetryProfile} disabled={retryingProfile}>
+              {retryingProfile ? "Reintentando..." : "Reintentar"}
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleLogout}>Cerrar sesión</Button>
+          </div>
         </div>
       </CenteredMessage>
     );

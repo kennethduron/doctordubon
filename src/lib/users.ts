@@ -1,4 +1,4 @@
-﻿import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { CLINIC_ID } from "@/lib/constants";
 import { db } from "@/lib/firebase";
 import { canApproveUsers, canAssignRoles, canDisableUsers, isCriticalRole } from "@/lib/roles";
@@ -31,11 +31,20 @@ function normalizeStatus(value: unknown): UserStatus {
   return "pending";
 }
 
+function fallbackUsername(data: Record<string, unknown>) {
+  const emailPrefix = typeof data.email === "string" ? data.email.split("@")[0] : "";
+  const cleanPrefix = emailPrefix.toLowerCase().replace(/[^a-z0-9._-]/g, "-").slice(0, 30);
+  return cleanPrefix.length >= 3 ? cleanPrefix : "no-registrado";
+}
+
 function normalizeUser(id: string, data: Record<string, unknown>): UserProfile {
   return {
     id: typeof data.id === "string" ? data.id : id,
     clinicId: typeof data.clinicId === "string" ? data.clinicId : CLINIC_ID,
     name: typeof data.name === "string" ? data.name : "Usuario del consultorio",
+    username: typeof data.username === "string" && data.username.trim()
+      ? data.username.trim().toLowerCase()
+      : fallbackUsername(data),
     email: typeof data.email === "string" ? data.email : "",
     role: normalizeRole(data.role),
     status: normalizeStatus(data.status),

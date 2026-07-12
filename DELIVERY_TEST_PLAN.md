@@ -13,7 +13,7 @@ Validar el flujo real del Dr. Oscar Dubon antes de aceptar la entrega del Centro
 
 ## Prueba manual
 
-1. **Crear la cuenta del doctor.** En Registro, ingresar el nombre, correo y contraseña del Dr. Oscar Dubon. Verificar el correo si el sistema lo solicita.
+1. **Crear la cuenta del doctor.** En Registro, ingresar el nombre, usuario visible, correo y contraseña del Dr. Oscar Dubon. Verificar el correo si el sistema lo solicita.
 2. **Verificar que quede pendiente.** Iniciar sesión con la cuenta recién creada y confirmar que se muestre el mensaje de cuenta pendiente de aprobación.
 3. **Entrar como Técnico operativo.** Cerrar la sesión del doctor e iniciar sesión con la cuenta del Técnico operativo.
 4. **Abrir Usuarios y permisos.** Confirmar que la cuenta del doctor aparezca en “Solicitudes pendientes”.
@@ -37,3 +37,7 @@ La entrega puede aceptarse cuando los 15 pasos finalicen sin errores que impidan
 
 - Correos personalizados mediante Resend: fase futura.
 - Notificaciones mediante FCM: fase futura.
+
+## Correos del sistema
+
+Los correos de verificación y recuperación son enviados por Firebase Authentication. Para una presentación de correo más personalizada con la marca Dr. Dubon se recomienda una fase futura con Resend o una configuración avanzada de plantillas.

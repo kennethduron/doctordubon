@@ -42,6 +42,8 @@ export function getFirebaseErrorMessage(
   const messages: Record<string, string> = {
     "validation/missing-name": "Ingrese el nombre completo.",
     "validation/missing-email": "Ingrese el correo.",
+    "validation/invalid-username":
+      "El usuario debe tener entre 3 y 30 caracteres y usar solo letras, números, punto, guion bajo o guion medio.",
     "registration/profile-create-failed":
       "La cuenta fue creada, pero no se pudo completar el perfil de acceso. Contacta al encargado del sistema.",
     "registration/verification-email-failed":

@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { AppLoading } from "@/components/ui/app-loading";
 import { useAuth } from "@/context/auth-context";
 
 export default function Home() {
@@ -10,16 +11,8 @@ export default function Home() {
 
   useEffect(() => {
     if (loading) return;
-
     router.replace(isAuthenticated ? "/dashboard" : "/login");
   }, [isAuthenticated, loading, router]);
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="rounded-lg border border-border-soft bg-white px-6 py-5 text-center shadow-sm">
-        <p className="text-sm font-semibold text-primary">Cargando Centro Financiero del Consultorio...</p>
-      </div>
-    </main>
-  );
+  return <AppLoading />;
 }
-

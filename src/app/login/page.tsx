@@ -1,14 +1,16 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AppLoading } from "@/components/ui/app-loading";
 import { useAuth } from "@/context/auth-context";
 import { loginWithEmail } from "@/lib/auth";
-import { APP_DESCRIPTION, APP_NAME, CLINIC_NAME } from "@/lib/constants";
+import { APP_NAME, CLINIC_NAME } from "@/lib/constants";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
 
 export default function LoginPage() {
@@ -46,52 +48,51 @@ export default function LoginPage() {
     }
   }
 
+  if (loading || isAuthenticated) {
+    return <AppLoading />;
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
-      <section className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-base font-bold text-white">CF</div>
-          <h1 className="mt-5 text-2xl font-bold text-slate-950">{APP_NAME}</h1>
-          <p className="mt-2 text-sm font-medium text-primary">Dr. Oscar Dubon</p>
-          <p className="mt-2 text-sm text-slate-500">{APP_DESCRIPTION}</p>
-        </div>
+    <AuthShell
+      title={APP_NAME}
+      description="Ingresa para administrar ingresos, gastos y reportes del consultorio."
+      footer={CLINIC_NAME}
+    >
+      <form className="grid gap-4" onSubmit={handleSubmit}>
+        <Input
+          id="email"
+          label="Correo electrónico"
+          type="email"
+          autoComplete="email"
+          placeholder="correo@ejemplo.com"
+          value={email}
+          required
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        <PasswordInput
+          id="password"
+          label="Contraseña"
+          autoComplete="current-password"
+          placeholder="Ingrese su contraseña"
+          value={password}
+          required
+          onChange={(event) => setPassword(event.target.value)}
+        />
+        {error ? <p className="rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{error}</p> : null}
+        <Button type="submit" className="mt-1 w-full" disabled={submitting}>
+          {submitting ? "Iniciando sesión..." : "Iniciar sesión"}
+        </Button>
+      </form>
 
-        <Card>
-          <CardContent>
-            <form className="grid gap-4" onSubmit={handleSubmit}>
-              <Input
-                id="email"
-                label="Correo"
-                type="email"
-                autoComplete="email"
-                placeholder="correo@ejemplo.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-              <Input
-                id="password"
-                label="Contraseña"
-                type="password"
-                autoComplete="current-password"
-                placeholder="Ingrese su contraseña"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-              {error ? <p className="rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{error}</p> : null}
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "Iniciando sesión..." : "Iniciar sesión"}
-              </Button>
-            </form>
-
-            <div className="mt-5 grid gap-2 text-center text-sm">
-              <Link className="font-semibold text-primary" href="/recuperar-contrasena">Recuperar contraseña</Link>
-              <Link className="text-slate-600" href="/registro">Crear cuenta o solicitar acceso</Link>
-            </div>
-          </CardContent>
-        </Card>
-        <p className="mt-5 text-center text-xs text-slate-500">{CLINIC_NAME}</p>
-      </section>
-    </main>
+      <div className="mt-6 grid gap-3 border-t border-border-soft pt-5 text-center text-sm">
+        <Link className="font-semibold text-primary hover:underline" href="/recuperar-contrasena">
+          ¿Olvidaste tu contraseña?
+        </Link>
+        <p className="text-slate-600">
+          ¿Necesitas acceso?{" "}
+          <Link className="font-semibold text-primary hover:underline" href="/registro">Crear cuenta</Link>
+        </p>
+      </div>
+    </AuthShell>
   );
 }
-
