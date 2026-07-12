@@ -88,14 +88,14 @@ export function UsersTable() {
     setError(null);
 
     try {
-      const result = await getUsersByClinic(userProfile.clinicId);
+      const result = await getUsersByClinic(userProfile.clinicId, role);
       setUsers(result);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar los usuarios.");
     } finally {
       setLoading(false);
     }
-  }, [userProfile]);
+  }, [role, userProfile]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -209,12 +209,12 @@ export function UsersTable() {
       <Card>
         <CardHeader>
           <CardTitle>Usuarios del consultorio</CardTitle>
-          <CardDescription>Revise solicitudes, accesos habilitados y cuentas deshabilitadas.</CardDescription>
+          <CardDescription>Revisa solicitudes, accesos habilitados y cuentas deshabilitadas.</CardDescription>
         </CardHeader>
         <CardContent>
           {!canAssign ? (
             <p className="mb-4 rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">
-              El Dueño operativo puede administrar cuentas de Administrador. Solo el Técnico operativo puede asignar o cambiar roles.
+              Puedes aprobar solicitudes y administrar cuentas operativas del consultorio.
             </p>
           ) : null}
           {message ? <p className="mb-4 rounded-md bg-mint p-3 text-sm font-medium text-mint-strong">{message}</p> : null}
@@ -224,7 +224,7 @@ export function UsersTable() {
           {!loading && users.length === 0 ? (
             <div className="rounded-md border border-dashed border-border-soft bg-slate-50 p-6 text-center">
               <p className="text-sm font-semibold text-slate-800">No hay usuarios registrados.</p>
-              <p className="mt-1 text-sm text-slate-500">Cuando alguien cree una cuenta, aparecerá aquí para revisión.</p>
+              <p className="mt-1 text-sm text-slate-500">Cuando alguien solicite acceso, aparecerá aquí para revisión.</p>
             </div>
           ) : null}
 
@@ -242,6 +242,10 @@ export function UsersTable() {
                       </div>
                       <Badge variant={statusBadgeVariant(group.status)}>{groupUsers.length}</Badge>
                     </div>
+
+                    {group.status === "pending" && role === "business_owner" && groupUsers.length > 0 ? (
+                      <p className="border-t border-border-soft bg-white px-4 py-3 text-sm text-slate-600">Al aprobar una solicitud, el acceso quedará habilitado como Administrador.</p>
+                    ) : null}
 
                     {groupUsers.length === 0 ? (
                       <p className="px-4 py-5 text-sm text-slate-500">{group.emptyMessage}</p>

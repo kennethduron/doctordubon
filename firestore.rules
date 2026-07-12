@@ -42,6 +42,15 @@ service cloud.firestore {
       return technicalOwner() || businessOwner();
     }
 
+    function canReadUserResource() {
+      return activeUser()
+        && resource.data.clinicId == clinicId()
+        && (
+          technicalOwner()
+          || (businessOwner() && resource.data.role != 'technical_owner')
+        );
+    }
+
     function canManageClinic() {
       return technicalOwner() || businessOwner();
     }
@@ -132,9 +141,9 @@ service cloud.firestore {
       // activos pueden consultar usuarios de su misma clínica.
       allow get: if signedIn() && (
         request.auth.uid == userId
-        || (canManageUsers() && resource.data.clinicId == clinicId())
+        || canReadUserResource()
       );
-      allow list: if canManageUsers() && sameClinicResource();
+      allow list: if canReadUserResource();
 
       allow create: if signedIn()
         && request.auth.uid == userId

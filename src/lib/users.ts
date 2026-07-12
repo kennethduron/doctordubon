@@ -77,7 +77,7 @@ function assertCanApprove(targetUser: UserProfile, currentUserProfile: UserProfi
   }
 
   if (currentUserProfile.role === "business_owner" && targetUser.role !== "admin") {
-    throw new Error("El Dueño operativo solo puede aprobar administradores.");
+    throw new Error("No tienes permiso para gestionar esta cuenta.");
   }
 }
 
@@ -89,7 +89,7 @@ function assertCanDisable(targetUser: UserProfile, currentUserProfile: UserProfi
   }
 
   if (currentUserProfile.role === "business_owner" && targetUser.role !== "admin") {
-    throw new Error("El Dueño operativo solo puede deshabilitar administradores.");
+    throw new Error("No tienes permiso para gestionar esta cuenta.");
   }
 }
 
@@ -97,15 +97,26 @@ function assertCanChangeRole(targetUser: UserProfile, nextRole: Role, currentUse
   assertSameClinic(targetUser, currentUserProfile);
 
   if (!canAssignRoles(currentUserProfile.role)) {
-    throw new Error("Solo el Técnico operativo puede cambiar roles.");
+    throw new Error("No tienes permiso para cambiar roles.");
   }
 
   if (targetUser.id === currentUserProfile.id && isCriticalRole(targetUser.role) && nextRole !== "technical_owner") {
-    throw new Error("No puedes quitarte el rol de Técnico operativo.");
+    throw new Error("Esta cuenta principal debe conservar su acceso completo.");
   }
 }
 
-export async function getUsersByClinic(clinicId: string) {
+async function getUsersByRole(clinicId: string, role: Role) {
+  const usersQuery = query(usersCollection, where("clinicId", "==", clinicId), where("role", "==", role));
+  const snapshot = await getDocs(usersQuery);
+  return snapshot.docs.map((userDoc) => normalizeUser(userDoc.id, userDoc.data()));
+}
+
+export async function getUsersByClinic(clinicId: string, viewerRole?: Role | null) {
+  if (viewerRole === "business_owner") {
+    const [admins, owners] = await Promise.all([getUsersByRole(clinicId, "admin"), getUsersByRole(clinicId, "business_owner")]);
+    return [...admins, ...owners].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
   const usersQuery = query(usersCollection, where("clinicId", "==", clinicId));
   const snapshot = await getDocs(usersQuery);
   return snapshot.docs
@@ -113,8 +124,10 @@ export async function getUsersByClinic(clinicId: string) {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function getPendingUsers(clinicId: string) {
-  const usersQuery = query(usersCollection, where("clinicId", "==", clinicId), where("status", "==", "pending"));
+export async function getPendingUsers(clinicId: string, viewerRole?: Role | null) {
+  const usersQuery = viewerRole === "business_owner"
+    ? query(usersCollection, where("clinicId", "==", clinicId), where("status", "==", "pending"), where("role", "==", "admin"))
+    : query(usersCollection, where("clinicId", "==", clinicId), where("status", "==", "pending"));
   const snapshot = await getDocs(usersQuery);
   return snapshot.docs
     .map((userDoc) => normalizeUser(userDoc.id, userDoc.data()))
@@ -136,7 +149,7 @@ export async function disableUser(userId: string, currentUserProfile: UserProfil
   assertCanDisable(targetUser, currentUserProfile);
 
   if (targetUser.id === currentUserProfile.id && isCriticalRole(targetUser.role)) {
-    throw new Error("No puedes deshabilitar tu propia cuenta de Técnico operativo.");
+    throw new Error("No puedes deshabilitar tu propia cuenta principal.");
   }
 
   await updateDoc(doc(db, "users", userId), {

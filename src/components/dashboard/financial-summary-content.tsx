@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { RecentMovements } from "@/components/dashboard/recent-movements";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/auth-context";
-import { calculateBalance, calculateExpenseTotal, calculateIncomeTotal, formatCurrency } from "@/lib/finance";
+import { calculateBalance, calculateExpenseTotal, calculateIncomeTotal, formatCurrency, formatLongDate, formatMonthYear } from "@/lib/finance";
 import { getCurrentMonthMovements, getRecentMovements, getTodayMovements } from "@/lib/movements";
 import type { Movement } from "@/types/movement";
 
@@ -50,6 +50,9 @@ export function FinancialSummaryContent() {
   const monthExpense = calculateExpenseTotal(monthMovements);
   const monthBalance = calculateBalance(monthMovements);
   const maxMonthlyAmount = Math.max(monthIncome, monthExpense, Math.abs(monthBalance), 1);
+  const todayLabel = formatLongDate();
+  const monthLabel = formatMonthYear();
+
   const monthlyBars = [
     { label: "Ingresos", value: monthIncome, tone: "bg-mint text-mint-strong" },
     { label: "Gastos", value: monthExpense, tone: "bg-danger-soft text-danger" },
@@ -60,6 +63,11 @@ export function FinancialSummaryContent() {
     <>
       {error ? <p className="mb-5 rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{error}</p> : null}
       {loading ? <p className="mb-5 rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">Cargando resumen financiero...</p> : null}
+
+      <div className="mb-5 rounded-lg border border-border-soft bg-white p-4 shadow-sm">
+        <p className="text-xs font-semibold uppercase text-slate-500">Resumen activo</p>
+        <p className="mt-1 text-sm font-semibold capitalize text-slate-950">Hoy es {todayLabel}. Mes actual: {monthLabel}.</p>
+      </div>
 
       <div className="grid gap-5 md:grid-cols-3">
         <StatCard title="Total ingresos" value={formatCurrency(monthIncome)} helper="Acumulado del mes" tone="income" icon="+" />

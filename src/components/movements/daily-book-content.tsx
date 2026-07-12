@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import { EditMovementDialog } from "@/components/forms/edit-movement-dialog";
 import { MovementForm } from "@/components/forms/movement-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DateRangeQuickFilters } from "@/components/ui/date-range-quick-filters";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, Td, Th } from "@/components/ui/table";
@@ -12,7 +13,7 @@ import { useAuth } from "@/context/auth-context";
 import { useMovements } from "@/hooks/use-movements";
 import { CLINIC_NAME, DOCTOR_NAME, paymentMethodLabels } from "@/lib/constants";
 import { exportMovementsToExcel, exportMovementsToPDF } from "@/lib/export";
-import { calculateBalance, calculateExpenseTotal, calculateIncomeTotal, formatCurrency } from "@/lib/finance";
+import { calculateBalance, calculateExpenseTotal, calculateIncomeTotal, describeDateRange, formatCurrency, type DatePreset } from "@/lib/finance";
 import { canCreateMovements, canDeleteMovements, canEditMovements } from "@/lib/roles";
 import { formatDate, summarizeMovements } from "@/lib/utils";
 import type { CreateMovementInput, Movement, UpdateMovementInput } from "@/types/movement";
@@ -36,6 +37,7 @@ export function DailyBookContent() {
     deleteMovement,
     filterByDateRange,
   } = useMovements();
+  const [activePreset, setActivePreset] = useState<DatePreset>("month");
   const [localStartDate, setLocalStartDate] = useState(startDate);
   const [localEndDate, setLocalEndDate] = useState(endDate);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -59,6 +61,16 @@ export function DailyBookContent() {
     setActionError(null);
     await createMovement(data);
     setSuccessMessage("Movimiento guardado correctamente.");
+  }
+
+  function handlePresetChange(preset: DatePreset, nextRange?: { startDate: string; endDate: string }) {
+    setActivePreset(preset);
+    if (!nextRange) return;
+    setLocalStartDate(nextRange.startDate);
+    setLocalEndDate(nextRange.endDate);
+    setSuccessMessage(null);
+    setActionError(null);
+    void filterByDateRange(nextRange.startDate, nextRange.endDate);
   }
 
   async function handleFilter() {
@@ -146,9 +158,11 @@ export function DailyBookContent() {
             <CardDescription>Consulta movimientos reales por rango de fechas y descarga el libro diario.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5">
+            <DateRangeQuickFilters activePreset={activePreset} onPresetChange={handlePresetChange} />
+            <p className="rounded-md bg-slate-50 p-3 text-sm font-medium text-slate-700">Rango activo: {describeDateRange(localStartDate, localEndDate)}</p>
             <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-              <Input id="book-start-date" label="Fecha inicial" type="date" value={localStartDate} onChange={(event) => setLocalStartDate(event.target.value)} />
-              <Input id="book-end-date" label="Fecha final" type="date" value={localEndDate} onChange={(event) => setLocalEndDate(event.target.value)} />
+              <Input id="book-start-date" label="Fecha inicial" type="date" value={localStartDate} onChange={(event) => { setActivePreset("custom"); setLocalStartDate(event.target.value); }} />
+              <Input id="book-end-date" label="Fecha final" type="date" value={localEndDate} onChange={(event) => { setActivePreset("custom"); setLocalEndDate(event.target.value); }} />
               <Button type="button" onClick={handleFilter} disabled={loading}>Filtrar</Button>
             </div>
             <div className="grid gap-3 md:grid-cols-3">

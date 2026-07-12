@@ -22,6 +22,11 @@ const emailActionSettings: ActionCodeSettings = {
 
 const usernamePattern = /^[a-z0-9._-]{3,30}$/;
 
+type ProfessionalEmailResponse = {
+  sent?: boolean;
+  code?: string;
+};
+
 export function normalizeUsername(username: string) {
   return username.trim().toLowerCase();
 }
@@ -37,6 +42,30 @@ export function getUsernameValidationMessage(username: string) {
   }
 
   return null;
+}
+
+async function postProfessionalEmail(endpoint: string, body: Record<string, string>) {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const payload = (await response.json().catch(() => ({}))) as ProfessionalEmailResponse;
+
+  if (!response.ok && payload.code) {
+    throw createClientError(payload.code);
+  }
+
+  return Boolean(payload.sent);
+}
+
+async function sendProfessionalVerificationEmail(user: User) {
+  const idToken = await user.getIdToken();
+  return postProfessionalEmail("/api/auth/send-verification", { idToken });
+}
+
+async function sendProfessionalPasswordResetEmail(email: string) {
+  return postProfessionalEmail("/api/auth/send-password-reset", { email });
 }
 
 export async function loginWithEmail(email: string, password: string) {
@@ -99,6 +128,17 @@ export async function logout() {
 
 export async function resetPassword(email: string) {
   try {
+    const professionalEmailSent = await sendProfessionalPasswordResetEmail(email.trim());
+
+    if (professionalEmailSent) {
+      return;
+    }
+  } catch (error) {
+    console.error("Password reset error:", getFirebaseErrorLogDetails(error));
+    throw error;
+  }
+
+  try {
     return await sendPasswordResetEmail(auth, email.trim(), emailActionSettings);
   } catch (error) {
     console.error("Password reset error:", getFirebaseErrorLogDetails(error));
@@ -109,6 +149,16 @@ export async function resetPassword(email: string) {
 export async function sendVerificationEmailIfNeeded(user: User) {
   if (user.emailVerified) {
     return false;
+  }
+
+  try {
+    const professionalEmailSent = await sendProfessionalVerificationEmail(user);
+
+    if (professionalEmailSent) {
+      return true;
+    }
+  } catch (error) {
+    console.error("Email verification error:", getFirebaseErrorLogDetails(error));
   }
 
   try {

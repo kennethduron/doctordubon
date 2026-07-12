@@ -22,7 +22,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { buttonStyles } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/auth-context";
-import { calculateBalance, calculateExpenseTotal, calculateIncomeTotal, formatCurrency, getMonthDateRange } from "@/lib/finance";
+import { calculateBalance, calculateExpenseTotal, calculateIncomeTotal, formatCurrency, formatLongDate, formatMonthYear, getMonthDateRange } from "@/lib/finance";
 import { getCurrentMonthMovements, getRecentMovements, getTodayMovements } from "@/lib/movements";
 import { cn } from "@/lib/utils";
 import type { Movement } from "@/types/movement";
@@ -195,6 +195,8 @@ export function DashboardContent() {
   const monthIncome = calculateIncomeTotal(monthMovements);
   const monthExpense = calculateExpenseTotal(monthMovements);
   const monthRange = getMonthDateRange();
+  const todayLabel = formatLongDate();
+  const monthLabel = formatMonthYear();
 
   return (
     <>
@@ -203,12 +205,27 @@ export function DashboardContent() {
 
       <DashboardHero />
 
+      <div className="mb-5 grid gap-3 md:grid-cols-3">
+        <div className="rounded-lg border border-border-soft bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase text-slate-500">Hoy</p>
+          <p className="mt-1 text-sm font-semibold capitalize text-slate-950">{todayLabel}</p>
+        </div>
+        <div className="rounded-lg border border-border-soft bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase text-slate-500">Mes actual</p>
+          <p className="mt-1 text-sm font-semibold capitalize text-slate-950">{monthLabel}</p>
+        </div>
+        <div className="rounded-lg border border-border-soft bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase text-slate-500">Período mensual</p>
+          <p className="mt-1 text-sm font-semibold text-slate-950">{monthRange.startDate} al {monthRange.endDate}</p>
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard title="Ingresos de hoy" value={formatCurrency(todayIncome)} helper={todayMovements.length ? "Movimientos registrados hoy" : "No hay ingresos registrados hoy"} tone="income" icon={<ArrowUpRight className="h-5 w-5" />} accentIcon={<Wallet className="h-4 w-4" />} />
         <StatCard title="Gastos de hoy" value={formatCurrency(todayExpense)} helper={todayExpense > 0 ? "Salidas registradas hoy" : "No hay gastos registrados hoy"} tone="expense" icon={<ArrowDownRight className="h-5 w-5" />} accentIcon={<Activity className="h-4 w-4" />} />
         <StatCard title="Balance del día" value={formatCurrency(calculateBalance(todayMovements))} helper="Ingresos menos gastos" tone="balance" icon={<Calculator className="h-5 w-5" />} accentIcon={<HeartPulse className="h-4 w-4" />} />
-        <StatCard title="Ingresos del mes" value={formatCurrency(monthIncome)} helper={`Desde ${monthRange.startDate}`} tone="income" icon={<CalendarDays className="h-5 w-5" />} accentIcon={<Wallet className="h-4 w-4" />} />
-        <StatCard title="Gastos del mes" value={formatCurrency(monthExpense)} helper={`Hasta ${monthRange.endDate}`} tone="expense" icon={<CalendarDays className="h-5 w-5" />} accentIcon={<Activity className="h-4 w-4" />} />
+        <StatCard title="Ingresos del mes" value={formatCurrency(monthIncome)} helper={`Mes actual: ${monthLabel}`} tone="income" icon={<CalendarDays className="h-5 w-5" />} accentIcon={<Wallet className="h-4 w-4" />} />
+        <StatCard title="Gastos del mes" value={formatCurrency(monthExpense)} helper={`Mes actual: ${monthLabel}`} tone="expense" icon={<CalendarDays className="h-5 w-5" />} accentIcon={<Activity className="h-4 w-4" />} />
         <StatCard title="Balance del mes" value={formatCurrency(calculateBalance(monthMovements))} helper="Resultado neto mensual" tone="balance" icon={<Wallet className="h-5 w-5" />} accentIcon={<Calculator className="h-4 w-4" />} />
       </div>
 

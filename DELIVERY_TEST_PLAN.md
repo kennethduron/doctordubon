@@ -50,3 +50,20 @@ Antes de probar registro, verificación de correo o recuperación de contraseña
 - Vercel -> Project Settings -> Environment Variables incluye `NEXT_PUBLIC_APP_URL=https://doctordubon.vercel.app`.
 - Si se cambia `NEXT_PUBLIC_APP_URL`, hacer redeploy en Vercel antes de probar.
 - Firebase Console -> Authentication -> Templates permite personalizar las plantillas de verificación y recuperación en una fase de presentación.
+
+## Prueba de correos profesionales
+
+- Confirmar en Vercel `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL` y `FIREBASE_ADMIN_PRIVATE_KEY`.
+- Confirmar que Resend tenga un dominio de envío verificado para mejorar entregabilidad.
+- Crear una cuenta nueva y comprobar que el correo de verificación tenga botón “Verificar mi cuenta”.
+- Verificar que el botón abra `/verificar-correo` dentro del sistema.
+- Solicitar recuperación de contraseña y comprobar que el botón abra `/restablecer-contrasena` dentro del sistema.
+- Si las variables de Resend o Firebase Admin faltan, confirmar que el flujo de Firebase Authentication siga funcionando como respaldo.
+
+## Reglas de usuarios
+
+Después de esta fase, publicar reglas de Firestore para que el Dueño operativo no pueda leer documentos del Técnico operativo:
+
+```bash
+firebase deploy --only firestore:rules
+```

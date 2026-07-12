@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DateRangeQuickFilters } from "@/components/ui/date-range-quick-filters";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, Td, Th } from "@/components/ui/table";
@@ -11,7 +12,7 @@ import { useAuth } from "@/context/auth-context";
 import { useMovements } from "@/hooks/use-movements";
 import { CLINIC_NAME, DOCTOR_NAME, paymentMethodLabels } from "@/lib/constants";
 import { exportMovementsToExcel, exportMovementsToPDF } from "@/lib/export";
-import { calculateBalance, calculateExpenseTotal, calculateIncomeTotal, formatCurrency, getMonthDateRange } from "@/lib/finance";
+import { calculateBalance, calculateExpenseTotal, calculateIncomeTotal, describeDateRange, formatCurrency, getMonthDateRange, type DatePreset } from "@/lib/finance";
 import { canViewReports } from "@/lib/roles";
 import { formatDate, summarizeMovements } from "@/lib/utils";
 
@@ -21,12 +22,21 @@ export function ReportsContent() {
   const { movements, loading, error, filterByDateRange } = useMovements({ initialStartDate: range.startDate, initialEndDate: range.endDate });
   const [startDate, setStartDate] = useState(range.startDate);
   const [endDate, setEndDate] = useState(range.endDate);
+  const [activePreset, setActivePreset] = useState<DatePreset>("month");
   const [notice, setNotice] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
   const totals = summarizeMovements(movements);
 
   if (!canViewReports(role)) {
     return <p className="rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">No tienes permiso para ver reportes.</p>;
+  }
+
+  function handlePresetChange(preset: DatePreset, nextRange?: { startDate: string; endDate: string }) {
+    setActivePreset(preset);
+    if (!nextRange) return;
+    setStartDate(nextRange.startDate);
+    setEndDate(nextRange.endDate);
+    void filterByDateRange(nextRange.startDate, nextRange.endDate);
   }
 
   async function handleGenerateReport() {
@@ -78,9 +88,11 @@ export function ReportsContent() {
           <CardDescription>Selecciona el rango de fechas para preparar el reporte mensual del consultorio.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto_auto_auto] lg:items-end">
-            <Input id="start-date" label="Fecha inicial" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-            <Input id="end-date" label="Fecha final" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+          <DateRangeQuickFilters activePreset={activePreset} onPresetChange={handlePresetChange} />
+          <p className="mt-4 rounded-md bg-slate-50 p-3 text-sm font-medium text-slate-700">Rango activo: {describeDateRange(startDate, endDate)}</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr_auto_auto_auto] lg:items-end">
+            <Input id="start-date" label="Fecha inicial" type="date" value={startDate} onChange={(event) => { setActivePreset("custom"); setStartDate(event.target.value); }} />
+            <Input id="end-date" label="Fecha final" type="date" value={endDate} onChange={(event) => { setActivePreset("custom"); setEndDate(event.target.value); }} />
             <Button type="button" onClick={handleGenerateReport} disabled={loading}>Generar reporte</Button>
             <Button type="button" variant="secondary" disabled={Boolean(exporting)} onClick={() => handleExport("pdf")}>
               {exporting === "pdf" ? "Generando..." : "Exportar PDF"}

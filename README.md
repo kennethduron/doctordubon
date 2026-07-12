@@ -50,3 +50,32 @@ NEXT_PUBLIC_APP_URL=https://doctordubon.vercel.app
 Después de cambiar variables de entorno en Vercel, haz redeploy para que Next.js incluya el valor público correcto en el build.
 
 Los correos de verificación y recuperación los envía Firebase Authentication. La personalización visual se realiza en Firebase Console -> `Authentication` -> `Templates`.
+
+## Correos profesionales
+
+El flujo principal de verificación y recuperación usa Firebase Admin del lado servidor para generar códigos seguros y Resend para enviar correos HTML con la marca del consultorio. El flujo nativo de Firebase Authentication queda como respaldo si las variables server-side no están configuradas.
+
+Variables necesarias en Vercel:
+
+```bash
+RESEND_API_KEY=
+RESEND_FROM_EMAIL="Centro Financiero del Consultorio <notificaciones@tudominio.com>"
+FIREBASE_ADMIN_PROJECT_ID=
+FIREBASE_ADMIN_CLIENT_EMAIL=
+FIREBASE_ADMIN_PRIVATE_KEY=
+NEXT_PUBLIC_APP_URL=https://doctordubon.vercel.app
+```
+
+`FIREBASE_ADMIN_PRIVATE_KEY` debe guardarse solo en Vercel, con saltos de línea escapados como `\n` si Vercel lo requiere. No se debe subir al repositorio.
+
+Para mejorar entregabilidad y reducir spam, configura y verifica un dominio de envío propio en Resend. Sin dominio verificado, los correos pueden seguir llegando a spam aunque el diseño y el flujo estén listos.
+
+## Publicación de reglas
+
+Si se modifican permisos de usuarios o reglas de Firestore, publicar manualmente:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+Vercel no publica reglas de Firestore automáticamente.

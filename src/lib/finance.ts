@@ -1,4 +1,6 @@
-﻿import type { Movement } from "@/types/movement";
+import type { Movement } from "@/types/movement";
+
+export type DatePreset = "today" | "week" | "month" | "year" | "custom";
 
 export function formatCurrency(amount: number) {
   return `L ${new Intl.NumberFormat("en-US", {
@@ -42,6 +44,65 @@ export function getMonthDateRange(date = new Date()) {
     startDate: toDateInputValue(start),
     endDate: toDateInputValue(end),
   };
+}
+
+export function getWeekDateRange(date = new Date()) {
+  const day = date.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const start = new Date(date);
+  start.setDate(date.getDate() + mondayOffset);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  return {
+    startDate: toDateInputValue(start),
+    endDate: toDateInputValue(end),
+  };
+}
+
+export function getYearDateRange(date = new Date()) {
+  const year = date.getFullYear();
+
+  return {
+    startDate: `${year}-01-01`,
+    endDate: `${year}-12-31`,
+  };
+}
+
+export function getDatePresetRange(preset: DatePreset) {
+  if (preset === "today") {
+    const today = getTodayDate();
+    return { startDate: today, endDate: today };
+  }
+
+  if (preset === "week") return getWeekDateRange();
+  if (preset === "year") return getYearDateRange();
+  return getMonthDateRange();
+}
+
+export function formatLongDate(date = new Date()) {
+  return new Intl.DateTimeFormat("es-HN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+export function formatMonthYear(date = new Date()) {
+  return new Intl.DateTimeFormat("es-HN", { month: "long", year: "numeric" }).format(date);
+}
+
+export function formatDateLabel(dateValue: string) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  return new Intl.DateTimeFormat("es-HN", { day: "numeric", month: "long", year: "numeric" }).format(
+    new Date(year, month - 1, day),
+  );
+}
+
+export function describeDateRange(startDate: string, endDate: string) {
+  if (startDate === endDate) return formatDateLabel(startDate);
+  return `${formatDateLabel(startDate)} al ${formatDateLabel(endDate)}`;
 }
 
 export function filterActiveMovements(movements: Movement[]) {
