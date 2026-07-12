@@ -68,7 +68,10 @@ Antes de probar registro, verificación de correo o recuperación de contraseña
 - Probar un usuario inexistente y una contraseña incorrecta; ambos deben mostrar “Usuario, correo o contraseña incorrectos.”
 - Registrar un nombre de usuario nuevo y confirmar que se guarde en minúsculas.
 - Intentar registrar el mismo nombre de usuario con otro correo y confirmar “Este usuario ya está en uso. Elige otro.”
-- Confirmar en Vercel FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL y FIREBASE_ADMIN_PRIVATE_KEY.
+- Confirmar en Vercel FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY y NEXT_PUBLIC_APP_URL.
+- Después de cambiar variables, hacer Redeploy y repetir un registro completo.
+- Confirmar que el registro crea users/{uid} y usernames/{username} con rol Administrador y estado Pendiente.
+- Si existe una identidad incompleta de una prueba anterior, eliminarla en Firebase Authentication y limpiar sus documentos huérfanos antes de reutilizar el correo o usuario.
 
 ## Prueba de administración de usuarios
 

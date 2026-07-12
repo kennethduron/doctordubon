@@ -37,6 +37,14 @@ El inicio de sesión acepta el correo electrónico o el nombre de usuario normal
 
 El nombre de usuario es un identificador visual y de acceso. Se guarda en minúsculas, omite un @ inicial, admite de 3 a 30 letras, números, puntos, guiones bajos o guiones medios y se reserva de forma transaccional para evitar duplicados. La colección de nombres de usuario no tiene lectura ni escritura directa desde el cliente.
 
+## Configuración del registro con usuario
+
+Para crear la identidad, el perfil y la reserva del nombre de usuario, Vercel debe tener configuradas en Producción las variables FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY y NEXT_PUBLIC_APP_URL. La clave privada puede guardarse con saltos de línea reales o con \n escapados. Después de agregar o cambiar cualquiera de estas variables, se debe hacer Redeploy.
+
+La creación directa de perfiles y la colección privada de nombres de usuario están bloqueadas para el cliente. Publica las reglas ejecutando firebase deploy --only firestore:rules.
+
+Si una identidad quedó creada sin perfil antes de esta corrección, elimínala en Firebase Console -> Authentication -> Users. Después comprueba y elimina, si existen, users/{uid} y usernames/{username} antes de volver a registrar la cuenta. No elimines perfiles que tengan actividad financiera.
+
 ## Notificaciones internas
 
 El sistema incluye un centro de notificaciones interno basado en la colección `notifications` de Cloud Firestore. La campana del encabezado muestra notificaciones no leídas, permite revisar las más recientes y marcarlas como leídas.

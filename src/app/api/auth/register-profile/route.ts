@@ -4,6 +4,7 @@ import { CLINIC_ID } from "@/lib/constants";
 import {
   getFirebaseAdminAuth,
   getFirebaseAdminFirestore,
+  getMissingFirebaseAdminVariables,
   isFirebaseAdminConfigured,
 } from "@/lib/firebase-admin";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
@@ -24,11 +25,27 @@ function getBearerToken(request: Request) {
 }
 
 function getServerErrorDetails(error: unknown) {
+  const rawMessage =
+    typeof error === "object" && error !== null && "message" in error && typeof error.message === "string"
+      ? error.message
+      : null;
+
   return {
     code:
       typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
         ? error.code
         : null,
+    message:
+      rawMessage
+        ?.replace(
+          /-----BEGIN PRIVATE KEY-----[\s\S]*?-----END PRIVATE KEY-----/g,
+          "[redacted-private-key]",
+        )
+        .replace(
+          /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g,
+          "[redacted-token]",
+        )
+        .slice(0, 500) ?? null,
     name:
       typeof error === "object" && error !== null && "name" in error && typeof error.name === "string"
         ? error.name
@@ -38,58 +55,74 @@ function getServerErrorDetails(error: unknown) {
 
 export async function POST(request: Request) {
   if (!isFirebaseAdminConfigured()) {
-    console.error("Registration profile error:", { code: "admin/not-configured", name: null });
-    return NextResponse.json({ code: "registration/profile-create-failed" }, { status: 503 });
+    console.error("Register profile error:", {
+      code: "admin/not-configured",
+      message: "Firebase Admin no está configurado correctamente.",
+      name: "ConfigurationError",
+      missingVariables: getMissingFirebaseAdminVariables(),
+    });
+    return NextResponse.json({ code: "registration/profile-create-failed", canDeleteAuthUser: true }, { status: 503 });
   }
 
-  const adminAuth = getFirebaseAdminAuth();
-  const adminDb = getFirebaseAdminFirestore();
+  let adminAuth;
+  let adminDb;
+
+  try {
+    adminAuth = getFirebaseAdminAuth();
+    adminDb = getFirebaseAdminFirestore();
+  } catch (error) {
+    console.error("Register profile error:", getServerErrorDetails(error));
+    return NextResponse.json({ code: "registration/profile-create-failed", canDeleteAuthUser: true }, { status: 503 });
+  }
+
   if (!adminAuth || !adminDb) {
-    return NextResponse.json({ code: "registration/profile-create-failed" }, { status: 503 });
+    console.error("Register profile error:", {
+      code: "admin/initialization-failed",
+      message: "Firebase Admin no está configurado correctamente.",
+      name: "ConfigurationError",
+    });
+    return NextResponse.json({ code: "registration/profile-create-failed", canDeleteAuthUser: true }, { status: 503 });
   }
 
   const idToken = getBearerToken(request);
   if (!idToken) {
-    return NextResponse.json({ code: "auth/invalid-credential" }, { status: 401 });
+    return NextResponse.json({ code: "auth/invalid-credential", canDeleteAuthUser: true }, { status: 401 });
   }
 
   let decodedToken;
   try {
-    decodedToken = await adminAuth.verifyIdToken(idToken, true);
+    decodedToken = await adminAuth.verifyIdToken(idToken);
   } catch (error) {
-    console.error("Registration profile error:", getServerErrorDetails(error));
-    return NextResponse.json({ code: "auth/invalid-credential" }, { status: 401 });
+    console.error("Register profile error:", getServerErrorDetails(error));
+    return NextResponse.json({ code: "auth/invalid-credential", canDeleteAuthUser: true }, { status: 401 });
   }
 
   let body: RegisterProfileRequest;
   try {
     body = (await request.json()) as RegisterProfileRequest;
   } catch {
-    return NextResponse.json({ code: "registration/profile-create-failed" }, { status: 400 });
+    return NextResponse.json({ code: "registration/profile-create-failed", canDeleteAuthUser: true }, { status: 400 });
   }
 
   const cleanName = body.name?.trim() ?? "";
   const cleanUsername = normalizeUsername(body.username ?? "");
 
   if (cleanName.length < 2 || cleanName.length > 100) {
-    return NextResponse.json({ code: "validation/missing-name" }, { status: 400 });
+    return NextResponse.json({ code: "validation/missing-name", canDeleteAuthUser: true }, { status: 400 });
   }
 
   if (!isValidUsername(cleanUsername)) {
-    return NextResponse.json({ code: "validation/invalid-username" }, { status: 400 });
+    return NextResponse.json({ code: "validation/invalid-username", canDeleteAuthUser: true }, { status: 400 });
   }
 
-  let userRecord;
-  try {
-    userRecord = await adminAuth.getUser(decodedToken.uid);
-  } catch (error) {
-    console.error("Registration profile error:", getServerErrorDetails(error));
-    return NextResponse.json({ code: "auth/invalid-credential" }, { status: 401 });
-  }
-
-  const email = userRecord.email?.trim().toLowerCase() ?? "";
-  if (!email) {
-    return NextResponse.json({ code: "registration/profile-create-failed" }, { status: 400 });
+  const email = typeof decodedToken.email === "string" ? decodedToken.email.trim().toLowerCase() : "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    console.error("Register profile error:", {
+      code: "auth/missing-email",
+      message: "El token verificado no contiene un correo válido.",
+      name: "ValidationError",
+    });
+    return NextResponse.json({ code: "registration/profile-create-failed", canDeleteAuthUser: true }, { status: 400 });
   }
 
   const userRef = adminDb.collection("users").doc(decodedToken.uid);
@@ -160,27 +193,47 @@ export async function POST(request: Request) {
           await adminAuth.deleteUser(decodedToken.uid);
         }
       } catch (cleanupError) {
-        console.error("Registration cleanup error:", getServerErrorDetails(cleanupError));
+        console.error("Register profile cleanup error:", getServerErrorDetails(cleanupError));
       }
 
-      return NextResponse.json({ code: "registration/username-in-use" }, { status: 409 });
+      return NextResponse.json({ code: "registration/username-in-use", canDeleteAuthUser: true }, { status: 409 });
     }
 
     if (error instanceof ExistingProfileError) {
       return NextResponse.json({ code: "registration/profile-create-failed" }, { status: 409 });
     }
 
-    console.error("Registration profile error:", getServerErrorDetails(error));
+    console.error("Register profile error:", getServerErrorDetails(error));
+
+    let canDeleteAuthUser = false;
 
     try {
-      const profileSnapshot = await userRef.get();
-      if (!profileSnapshot.exists) {
+      const [profileSnapshot, usernameSnapshot] = await Promise.all([
+        userRef.get(),
+        usernameRef.get(),
+      ]);
+      const profileUsername = normalizeUsername(String(profileSnapshot.data()?.username ?? ""));
+      const profileWasCompleted =
+        profileSnapshot.exists
+        && profileUsername === cleanUsername
+        && usernameSnapshot.exists
+        && usernameSnapshot.data()?.uid === decodedToken.uid;
+
+      if (profileWasCompleted) {
+        return NextResponse.json({ created: true });
+      }
+
+      if (!profileSnapshot.exists && !usernameSnapshot.exists) {
         await adminAuth.deleteUser(decodedToken.uid);
+        canDeleteAuthUser = true;
       }
     } catch (cleanupError) {
-      console.error("Registration cleanup error:", getServerErrorDetails(cleanupError));
+      console.error("Register profile cleanup error:", getServerErrorDetails(cleanupError));
     }
 
-    return NextResponse.json({ code: "registration/profile-create-failed" }, { status: 500 });
+    return NextResponse.json(
+      { code: "registration/profile-create-failed", canDeleteAuthUser },
+      { status: 500 },
+    );
   }
 }

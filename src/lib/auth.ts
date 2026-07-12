@@ -9,12 +9,33 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { APP_URL, CLINIC_ID } from "@/lib/constants";
-import { auth, getFirebaseErrorLogDetails } from "@/lib/firebase";
+import { auth, getFirebaseErrorCode, getFirebaseErrorLogDetails } from "@/lib/firebase";
 import { createAccessRequestNotification } from "@/lib/notifications";
 import { getUsernameValidationMessage, normalizeUsername } from "@/lib/username";
 
-function createClientError(code: string) {
-  return Object.assign(new Error(code), { code });
+function createClientError(code: string, canDeleteAuthUser = false) {
+  return Object.assign(new Error(code), { code, canDeleteAuthUser });
+}
+
+function canDeleteIncompleteAuthUser(error: unknown) {
+  return Boolean(
+    typeof error === "object"
+      && error !== null
+      && "canDeleteAuthUser" in error
+      && error.canDeleteAuthUser === true,
+  );
+}
+
+async function removeIncompleteAuthUser(user: User) {
+  try {
+    await deleteUser(user);
+    return true;
+  } catch (error) {
+    const code = getFirebaseErrorCode(error);
+    const userAlreadyRemoved = code === "auth/user-not-found" || code === "auth/user-token-expired";
+    console.error("Registration cleanup error:", getFirebaseErrorLogDetails(error));
+    return userAlreadyRemoved;
+  }
 }
 
 const emailActionSettings: ActionCodeSettings = {
@@ -32,6 +53,7 @@ type ProfessionalEmailResponse = {
 type ApiResponse = {
   email?: string;
   code?: string;
+  canDeleteAuthUser?: boolean;
 };
 
 export { getUsernameValidationMessage, normalizeUsername } from "@/lib/username";
@@ -87,18 +109,29 @@ async function resolveLoginEmail(identifier: string) {
 
 async function createRegistrationProfile(user: User, name: string, username: string) {
   const idToken = await user.getIdToken();
-  const response = await fetch("/api/auth/register-profile", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + idToken,
-    },
-    body: JSON.stringify({ name, username }),
-  });
+  let response: Response;
+
+  try {
+    response = await fetch("/api/auth/register-profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + idToken,
+      },
+      body: JSON.stringify({ name, username }),
+    });
+  } catch (error) {
+    console.error("Registration profile error:", getFirebaseErrorLogDetails(error));
+    throw createClientError("registration/profile-create-failed-account-retained");
+  }
+
   const payload = (await response.json().catch(() => ({}))) as ApiResponse;
 
   if (!response.ok) {
-    throw createClientError(payload.code ?? "registration/profile-create-failed");
+    throw createClientError(
+      payload.code ?? "registration/profile-create-failed",
+      payload.canDeleteAuthUser === true,
+    );
   }
 }
 
@@ -138,16 +171,31 @@ export async function registerWithEmail(name: string, username: string, email: s
   try {
     await updateProfile(credential.user, { displayName: cleanName });
   } catch (error) {
-    await deleteUser(credential.user).catch(() => undefined);
+    const authUserRemoved = await removeIncompleteAuthUser(credential.user);
     await signOut(auth).catch(() => undefined);
     console.error("Registration profile error:", getFirebaseErrorLogDetails(error));
-    throw createClientError("registration/profile-create-failed");
+    throw createClientError(
+      authUserRemoved
+        ? "registration/profile-create-failed"
+        : "registration/profile-create-failed-account-retained",
+    );
   }
 
   try {
     await createRegistrationProfile(credential.user, cleanName, cleanUsername);
   } catch (error) {
+    let authUserRemoved = false;
+
+    if (canDeleteIncompleteAuthUser(error)) {
+      authUserRemoved = await removeIncompleteAuthUser(credential.user);
+    }
+
     await signOut(auth).catch(() => undefined);
+
+    if (!canDeleteIncompleteAuthUser(error) || !authUserRemoved) {
+      throw createClientError("registration/profile-create-failed-account-retained");
+    }
+
     throw error;
   }
 

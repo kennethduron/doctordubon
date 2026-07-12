@@ -74,6 +74,8 @@ export function getFirebaseErrorMessage(
       "El usuario debe tener entre 3 y 30 caracteres y usar solo letras, números, punto, guion bajo o guion medio.",
     "registration/username-in-use": "Este usuario ya está en uso. Elige otro.",
     "registration/profile-create-failed":
+      "No se pudo completar el perfil de acceso. Si el problema continúa, contacta al encargado del sistema.",
+    "registration/profile-create-failed-account-retained":
       "La cuenta fue creada, pero no se pudo completar el perfil de acceso. Contacta al encargado del sistema.",
     "registration/verification-email-failed":
       "La cuenta fue creada, pero no se pudo enviar el correo de verificación. Puedes solicitar otro enlace desde la pantalla de acceso.",
