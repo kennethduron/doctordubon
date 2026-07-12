@@ -7,7 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resetPassword } from "@/lib/auth";
 import { APP_NAME } from "@/lib/constants";
-import { getFirebaseErrorMessage } from "@/lib/firebase";
+import { getFirebaseErrorCode } from "@/lib/firebase";
+
+const neutralSuccessMessage =
+  "Si el correo existe, recibirás un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada, spam o promociones.";
+
+function getPasswordResetMessage(error: unknown) {
+  const code = getFirebaseErrorCode(error);
+
+  if (code === "auth/user-not-found") return neutralSuccessMessage;
+  if (code === "auth/invalid-email") return "Ingresa un correo electrónico válido.";
+  if (code === "auth/too-many-requests") {
+    return "Se realizaron demasiados intentos. Espera unos minutos antes de intentarlo nuevamente.";
+  }
+  if (code === "auth/unauthorized-continue-uri" || code === "auth/invalid-continue-uri") {
+    return "No se pudo enviar el enlace en este momento. Contacta al encargado del sistema.";
+  }
+
+  return "No se pudo enviar el enlace en este momento. Intenta nuevamente más tarde.";
+}
 
 export default function RecoverPasswordPage() {
   const [email, setEmail] = useState("");
@@ -29,9 +47,15 @@ export default function RecoverPasswordPage() {
 
     try {
       await resetPassword(email.trim());
-      setSuccess("Si el correo existe, recibirás un enlace para restablecer tu contraseña.");
+      setSuccess(neutralSuccessMessage);
     } catch (resetError) {
-      setError(getFirebaseErrorMessage(resetError));
+      const message = getPasswordResetMessage(resetError);
+
+      if (message === neutralSuccessMessage) {
+        setSuccess(message);
+      } else {
+        setError(message);
+      }
     } finally {
       setSubmitting(false);
     }

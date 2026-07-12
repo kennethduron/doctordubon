@@ -9,7 +9,7 @@ import { AppLoading } from "@/components/ui/app-loading";
 import { useAuth } from "@/context/auth-context";
 import { sendVerificationEmailIfNeeded } from "@/lib/auth";
 import { APP_NAME } from "@/lib/constants";
-import { getFirebaseErrorMessage } from "@/lib/firebase";
+import { getFirebaseErrorLogDetails, getFirebaseErrorMessage } from "@/lib/firebase";
 
 type ProtectedRouteProps = {
   children: ReactNode;
@@ -76,8 +76,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       await sendVerificationEmailIfNeeded(user);
       setVerificationMessage("Enlace de verificación enviado. Revisa tu correo, spam o promociones.");
     } catch (error) {
+      console.error("Email verification error:", getFirebaseErrorLogDetails(error));
       setVerificationMessage(
-        getFirebaseErrorMessage(error, "No se pudo enviar el correo de verificación. Intenta nuevamente."),
+        getFirebaseErrorMessage(error, "No se pudo enviar el enlace. Intenta nuevamente más tarde."),
       );
     } finally {
       setSendingVerification(false);
@@ -103,6 +104,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
       setVerificationMessage("Tu correo todavía no aparece como verificado. Abre el enlace recibido e intenta nuevamente.");
     } catch (error) {
+      console.error("Email verification error:", getFirebaseErrorLogDetails(error));
       setVerificationMessage(
         getFirebaseErrorMessage(error, "No se pudo actualizar el estado de verificación. Intenta nuevamente."),
       );

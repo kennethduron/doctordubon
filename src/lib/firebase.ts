@@ -23,21 +23,49 @@ export const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || fallbackConfig.appId,
 };
 
+const missingFirebaseConfig = [
+  ["apiKey", process.env.NEXT_PUBLIC_FIREBASE_API_KEY],
+  ["authDomain", process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN],
+  ["projectId", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID],
+  ["appId", process.env.NEXT_PUBLIC_FIREBASE_APP_ID],
+].filter(([, value]) => !value);
+
+if (missingFirebaseConfig.length > 0) {
+  console.warn("Missing public Firebase configuration:", missingFirebaseConfig.map(([key]) => key));
+}
+
 export const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth: Auth = getAuth(app);
 auth.languageCode = "es";
 export const db: Firestore = getFirestore(app);
 
+export function getFirebaseErrorCode(error: unknown) {
+  return error instanceof FirebaseError
+    ? error.code
+    : typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+      ? error.code
+      : null;
+}
+
+export function getFirebaseErrorLogDetails(error: unknown) {
+  return {
+    code: getFirebaseErrorCode(error),
+    message:
+      typeof error === "object" && error !== null && "message" in error && typeof error.message === "string"
+        ? error.message
+        : null,
+    name:
+      typeof error === "object" && error !== null && "name" in error && typeof error.name === "string"
+        ? error.name
+        : null,
+  };
+}
+
 export function getFirebaseErrorMessage(
   error: unknown,
   fallbackMessage = "No se pudo completar la acción. Intenta nuevamente.",
 ) {
-  const code =
-    error instanceof FirebaseError
-      ? error.code
-      : typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
-        ? error.code
-        : null;
+  const code = getFirebaseErrorCode(error);
 
   const messages: Record<string, string> = {
     "validation/missing-name": "Ingrese el nombre completo.",
@@ -53,13 +81,17 @@ export function getFirebaseErrorMessage(
     "auth/wrong-password": "La contraseña es incorrecta.",
     "auth/too-many-requests": "Demasiados intentos. Espera unos minutos antes de solicitar otro enlace.",
     "auth/invalid-email": "El correo no es válido.",
-    "auth/email-already-in-use": "Ya existe una cuenta con este correo.",
+    "auth/email-already-in-use": "Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.",
     "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
     "auth/missing-password": "Ingrese una contraseña.",
     "auth/operation-not-allowed": "El registro con correo y contraseña no está habilitado. Contacta al encargado del sistema.",
     "auth/network-request-failed": "No se pudo conectar con el servicio de autenticación. Revisa tu conexión.",
     "auth/unauthorized-domain":
       "Este dominio no está autorizado para iniciar sesión. Contacta al encargado del sistema.",
+    "auth/unauthorized-continue-uri":
+      "No se pudo enviar el enlace en este momento. Contacta al encargado del sistema.",
+    "auth/invalid-continue-uri":
+      "No se pudo enviar el enlace en este momento. Contacta al encargado del sistema.",
     "auth/user-token-expired": "Tu sesión expiró. Cierra sesión e inicia nuevamente.",
     "auth/requires-recent-login": "Por seguridad, vuelve a iniciar sesión y solicita otro enlace.",
     "auth/api-key-not-valid": "La conexión del sistema no está configurada correctamente.",

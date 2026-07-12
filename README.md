@@ -1,4 +1,4 @@
-﻿# Centro Financiero del Consultorio
+# Centro Financiero del Consultorio
 
 Libro Diario Digital para el Consultorio Dr. Oscar Dubon.
 
@@ -34,3 +34,19 @@ Firebase no se usa como hosting, dominio ni deploy de la app web. Vercel no publ
 ## Checklist
 
 Revisa `PROJECT_CHECKLIST.md` antes de entregar el sistema.
+
+## Configuración obligatoria en Firebase Auth
+
+En Firebase Console, revisa `Authentication` -> `Settings` -> `Authorized domains` y confirma que esté autorizado:
+
+- `doctordubon.vercel.app`
+
+En Vercel, revisa `Project Settings` -> `Environment Variables` y confirma:
+
+```bash
+NEXT_PUBLIC_APP_URL=https://doctordubon.vercel.app
+```
+
+Después de cambiar variables de entorno en Vercel, haz redeploy para que Next.js incluya el valor público correcto en el build.
+
+Los correos de verificación y recuperación los envía Firebase Authentication. La personalización visual se realiza en Firebase Console -> `Authentication` -> `Templates`.

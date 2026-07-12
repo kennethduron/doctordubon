@@ -41,3 +41,12 @@ La entrega puede aceptarse cuando los 15 pasos finalicen sin errores que impidan
 ## Correos del sistema
 
 Los correos de verificación y recuperación son enviados por Firebase Authentication. Para una presentación de correo más personalizada con la marca Dr. Dubon se recomienda una fase futura con Resend o una configuración avanzada de plantillas.
+
+## Configuración obligatoria en Firebase Auth
+
+Antes de probar registro, verificación de correo o recuperación de contraseña, confirmar:
+
+- Firebase Console -> Authentication -> Settings -> Authorized domains incluye `doctordubon.vercel.app`.
+- Vercel -> Project Settings -> Environment Variables incluye `NEXT_PUBLIC_APP_URL=https://doctordubon.vercel.app`.
+- Si se cambia `NEXT_PUBLIC_APP_URL`, hacer redeploy en Vercel antes de probar.
+- Firebase Console -> Authentication -> Templates permite personalizar las plantillas de verificación y recuperación en una fase de presentación.
