@@ -33,9 +33,10 @@
 - [x] `firebase.json` limitado a reglas e índices, sin configuración de hosting.
 - [x] El Administrador no puede administrar usuarios ni configuración.
 - [x] El Administrador no puede editar ni eliminar movimientos.
+- [x] El Dueño operativo ve su propia cuenta y el rol visible “Dueño operativo”.
 - [x] El Dueño operativo solo puede administrar Administradores.
 - [x] El Dueño operativo puede habilitar Administradores deshabilitados.
-- [x] El Dueño operativo no puede modificar ni deshabilitar al Técnico operativo.
+- [x] El Dueño operativo no ve ni puede modificar al Técnico operativo ni a otros Dueños operativos.
 - [x] Solo el Técnico operativo puede asignar roles de mayor acceso.
 - [x] Las cuentas pendientes o deshabilitadas solo pueden consultar su propio perfil.
 - [x] No existe eliminación física de usuarios ni movimientos.

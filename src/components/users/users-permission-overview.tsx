@@ -6,7 +6,7 @@ import { useAuth } from "@/context/auth-context";
 import { roleRules } from "@/lib/constants";
 
 export function UsersPermissionOverview() {
-  const { role } = useAuth();
+  const { role, userProfile } = useAuth();
 
   if (role === "technical_owner") {
     return (
@@ -35,12 +35,12 @@ export function UsersPermissionOverview() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gestión de accesos</CardTitle>
-        <CardDescription>Aprueba solicitudes y administra las cuentas operativas del consultorio.</CardDescription>
+        <CardTitle>Tu rol: Dueño operativo</CardTitle>
+        <CardDescription>{userProfile?.name ?? "Responsable del consultorio"}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 text-sm leading-6 text-slate-600">
-        <p>Las solicitudes pendientes aparecerán agrupadas para que puedas revisarlas con calma.</p>
-        <p>Al aprobar una cuenta, el acceso quedará habilitado con permisos administrativos normales.</p>
+        <p>Puedes aprobar solicitudes y administrar cuentas de Administrador del consultorio.</p>
+        <p>Las solicitudes, cuentas activas y cuentas deshabilitadas aparecen agrupadas para facilitar su revisión.</p>
       </CardContent>
     </Card>
   );

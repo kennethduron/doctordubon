@@ -123,10 +123,19 @@ async function getUsersByRole(clinicId: string, role: Role) {
   return snapshot.docs.map((userDoc) => normalizeUser(userDoc.id, userDoc.data()));
 }
 
-export async function getUsersByClinic(clinicId: string, viewerRole?: Role | null) {
-  if (viewerRole === "business_owner") {
-    const [admins, owners] = await Promise.all([getUsersByRole(clinicId, "admin"), getUsersByRole(clinicId, "business_owner")]);
-    return [...admins, ...owners].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+export async function getUsersByClinic(clinicId: string, viewerProfile?: UserProfile | null) {
+  if (!viewerProfile || viewerProfile.status !== "active" || viewerProfile.clinicId !== clinicId) {
+    return [];
+  }
+
+  if (viewerProfile.role === "business_owner") {
+    const admins = await getUsersByRole(clinicId, "admin");
+    return [viewerProfile, ...admins.filter((user) => user.id !== viewerProfile.id)]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  if (viewerProfile.role !== "technical_owner") {
+    return [];
   }
 
   const usersQuery = query(usersCollection, where("clinicId", "==", clinicId));

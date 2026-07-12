@@ -39,10 +39,12 @@ Eventos cubiertos en esta fase:
 
 - Nueva solicitud de acceso para responsables operativos.
 - Cuenta aprobada para el usuario aprobado.
+- Acceso habilitado para la cuenta reactivada.
+- Cuenta deshabilitada mediante un aviso operativo genérico.
 - Ingreso o gasto registrado para responsables operativos.
 - Movimiento retirado del listado activo para responsables operativos.
 
-Esta fase no usa FCM, notificaciones push del navegador ni permisos del navegador. Las notificaciones son visibles únicamente dentro del sistema después de iniciar sesión. Si se modifican `firestore.rules`, se deben publicar manualmente con `firebase deploy --only firestore:rules`.
+Estas notificaciones no son correos ni avisos push: funcionan únicamente en la campana del sistema después de iniciar sesión y no solicitan permisos del navegador. FCM queda reservado para una fase futura. Si se modifican `firestore.rules`, se deben publicar manualmente con `firebase deploy --only firestore:rules`.
 
 
 ## Administración de usuarios
@@ -50,8 +52,8 @@ Esta fase no usa FCM, notificaciones push del navegador ni permisos del navegado
 La pantalla `Usuarios y permisos` permite revisar solicitudes pendientes, usuarios activos y usuarios deshabilitados.
 
 - El Técnico operativo puede ver todos los usuarios, aprobar solicitudes, asignar roles permitidos, deshabilitar cuentas y habilitar cuentas deshabilitadas.
-- El Dueño operativo administra únicamente cuentas de Administrador: puede aprobar solicitudes, deshabilitar Administradores y habilitarlos nuevamente.
-- El Dueño operativo no ve al Técnico operativo en listas, conteos ni detalles.
+- El Dueño operativo ve su propia cuenta y su rol visible, y administra únicamente cuentas de Administrador: puede aprobar solicitudes, deshabilitar Administradores y habilitarlos nuevamente.
+- El Dueño operativo no ve al Técnico operativo ni a otros Dueños operativos en listas, conteos ni detalles.
 - El Administrador no accede a la administración de usuarios.
 
 Las reglas de Firestore deben estar publicadas para que estas restricciones también apliquen en la base de datos.

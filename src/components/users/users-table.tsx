@@ -93,14 +93,14 @@ export function UsersTable() {
     setError(null);
 
     try {
-      const result = await getUsersByClinic(userProfile.clinicId, role);
+      const result = await getUsersByClinic(userProfile.clinicId, userProfile);
       setUsers(result);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar los usuarios.");
     } finally {
       setLoading(false);
     }
-  }, [role, userProfile]);
+  }, [userProfile]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -153,13 +153,14 @@ export function UsersTable() {
 
   function getActionState(user: UserProfile) {
     const actionDisabled = savingUserId === user.id;
-    const protectsSelf = user.id === userProfile?.id && user.role === "technical_owner";
+    const isCurrentUser = user.id === userProfile?.id;
+    const protectsSelf = isCurrentUser && (user.role === "technical_owner" || user.role === "business_owner");
     const canApproveTarget = canApprove
       && user.status === "pending"
       && canCurrentUserApproveTarget(role, user.role);
     const canDisableTarget = !protectsSelf
       && canDisable
-      && user.status !== "disabled"
+      && user.status === "active"
       && canCurrentUserDisableTarget(role, user.role);
     const canEnableTarget = canEnable
       && user.status === "disabled"
@@ -230,11 +231,6 @@ export function UsersTable() {
           <CardDescription>Revisa solicitudes, accesos habilitados y cuentas deshabilitadas.</CardDescription>
         </CardHeader>
         <CardContent>
-          {!canAssign ? (
-            <p className="mb-4 rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">
-              Puedes aprobar solicitudes y administrar cuentas operativas del consultorio.
-            </p>
-          ) : null}
           {message ? <p className="mb-4 rounded-md bg-mint p-3 text-sm font-medium text-mint-strong">{message}</p> : null}
           {error ? <p className="mb-4 rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{error}</p> : null}
           {loading ? <p className="rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">Cargando usuarios...</p> : null}

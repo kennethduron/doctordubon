@@ -27,7 +27,7 @@ Validar el flujo real del Dr. Oscar Dubon antes de aceptar la entrega del Centro
 12. **Exportar PDF.** Descargar el reporte en PDF, abrirlo y revisar encabezado, fechas, movimientos y totales.
 13. **Exportar Excel.** Descargar el reporte en Excel, abrirlo y revisar hojas, columnas, movimientos y totales.
 14. **Probar en celular.** Repetir la navegación principal en un teléfono: Dashboard, ingreso, gasto, libro diario, reportes y menú móvil.
-15. **Confirmar la protección del Técnico operativo.** Desde la cuenta del doctor, abrir Usuarios y permisos y comprobar que no puede cambiar el rol, deshabilitar ni eliminar al Técnico operativo.
+15. **Confirmar la protección del Técnico operativo.** Desde la cuenta del doctor, abrir Usuarios y permisos y comprobar que la cuenta técnica no aparece en listas, conteos ni detalles.
 
 ## Criterio de aceptación
 
@@ -68,8 +68,10 @@ Antes de probar registro, verificación de correo o recuperación de contraseña
 - Deshabilitar un Administrador y confirmar que aparece en “Usuarios deshabilitados”.
 - Confirmar que el usuario deshabilitado muestra el botón “Habilitar” en computadora y celular.
 - Habilitar el Administrador y confirmar que vuelve a “Usuarios activos”.
-- Entrar como Dueño operativo y confirmar que puede aprobar, deshabilitar y habilitar Administradores.
-- Entrar como Dueño operativo y confirmar que no ve al Técnico operativo en listas, conteos, detalles ni notificaciones.
+- Entrar como Dueño operativo y confirmar que ve su propia cuenta activa con el rol “Dueño operativo”.
+- Confirmar que las solicitudes pendientes aparecen como Administrador y pueden aprobarse.
+- Confirmar que los Administradores activos muestran “Deshabilitar” y los deshabilitados muestran “Habilitar”.
+- Entrar como Dueño operativo y confirmar que no ve al Técnico operativo ni a otros Dueños operativos en listas, conteos, detalles ni notificaciones.
 - Entrar como Administrador y confirmar que no puede abrir Usuarios y permisos.
 
 ## Reglas de usuarios
@@ -81,6 +83,8 @@ firebase deploy --only firestore:rules
 ```
 
 ## Prueba de notificaciones internas
+
+Las notificaciones internas son avisos dentro de la campana del sistema. No son correos, no son notificaciones push, no requieren permisos del navegador y no usan FCM en esta fase.
 
 - Crear una cuenta nueva y confirmar que el Técnico operativo vea en la campana la notificación “Nueva solicitud de acceso”.
 - Aprobar una cuenta y confirmar que el usuario aprobado vea “Acceso aprobado” al iniciar sesión.

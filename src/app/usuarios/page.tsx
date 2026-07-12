@@ -6,7 +6,7 @@ export default function UsersPage() {
   return (
     <AppShell
       title="Usuarios y permisos"
-      subtitle="Administración de accesos financieros del consultorio."
+      subtitle="Administra solicitudes de acceso y cuentas del personal."
       allowedRoles={["technical_owner", "business_owner"]}
     >
       <UsersPermissionOverview />

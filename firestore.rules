@@ -47,7 +47,7 @@ service cloud.firestore {
         && resource.data.clinicId == clinicId()
         && (
           technicalOwner()
-          || (businessOwner() && resource.data.role != 'technical_owner')
+          || (businessOwner() && resource.data.role == 'admin')
         );
     }
 
@@ -333,8 +333,8 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /users/{userId} {
-      // Pending y disabled solo pueden leer su propio perfil. Los responsables
-      // activos pueden consultar usuarios de su misma clínica.
+      // Pending y disabled solo pueden leer su propio perfil. El Técnico consulta
+      // la clínica completa; el Dueño solo su perfil y cuentas de Administrador.
       allow get: if signedIn() && (
         request.auth.uid == userId
         || canReadUserResource()
@@ -360,7 +360,7 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
 
-      // El Dueño operativo solo puede aprobar o deshabilitar administradores.
+      // El Dueño operativo solo puede aprobar, deshabilitar o habilitar administradores.
       allow update: if businessOwner()
         && resource.data.clinicId == clinicId()
         && request.resource.data.clinicId == resource.data.clinicId
