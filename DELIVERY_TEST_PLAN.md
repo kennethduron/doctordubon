@@ -61,6 +61,15 @@ Antes de probar registro, verificación de correo o recuperación de contraseña
 - Si las variables de Resend o Firebase Admin faltan, confirmar que el flujo de Firebase Authentication siga funcionando como respaldo.
 
 
+## Prueba de acceso con correo o usuario
+
+- Iniciar sesión con un correo válido y confirmar el acceso normal.
+- Cerrar sesión e iniciar con el nombre de usuario equivalente, incluyendo una prueba con @ inicial.
+- Probar un usuario inexistente y una contraseña incorrecta; ambos deben mostrar “Usuario, correo o contraseña incorrectos.”
+- Registrar un nombre de usuario nuevo y confirmar que se guarde en minúsculas.
+- Intentar registrar el mismo nombre de usuario con otro correo y confirmar “Este usuario ya está en uso. Elige otro.”
+- Confirmar en Vercel FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL y FIREBASE_ADMIN_PRIVATE_KEY.
+
 ## Prueba de administración de usuarios
 
 - Entrar como Técnico operativo y confirmar que las solicitudes pendientes muestran “Aprobar acceso”.
@@ -74,9 +83,15 @@ Antes de probar registro, verificación de correo o recuperación de contraseña
 - Entrar como Dueño operativo y confirmar que no ve al Técnico operativo ni a otros Dueños operativos en listas, conteos, detalles ni notificaciones.
 - Entrar como Administrador y confirmar que no puede abrir Usuarios y permisos.
 
+- Como Técnico operativo, eliminar una cuenta pendiente sin historial y confirmar que desaparezca de autenticación, usuarios y reservas.
+- Como Dueño operativo, eliminar una cuenta de Administrador sin historial y confirmar que no pueda eliminar otros roles.
+- Intentar eliminar una cuenta que creó, editó o retiró un movimiento y confirmar el mensaje que indica deshabilitarla.
+- Confirmar que ninguna cuenta pueda eliminarse a sí misma y que el Administrador no vea acciones de eliminación.
+- Confirmar en la campana el aviso genérico “Usuario eliminado”.
+
 ## Reglas de usuarios
 
-Después de esta fase, publicar reglas de Firestore para que el Dueño operativo no pueda leer documentos del Técnico operativo:
+Después de esta fase, publicar reglas de Firestore para proteger usuarios y bloquear el acceso directo a la colección de nombres de usuario:
 
 ```bash
 firebase deploy --only firestore:rules

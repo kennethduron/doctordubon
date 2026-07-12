@@ -1,49 +1,40 @@
 import type { ActionCodeSettings, User } from "firebase/auth";
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { APP_URL, CLINIC_ID } from "@/lib/constants";
-import { auth, db, getFirebaseErrorLogDetails } from "@/lib/firebase";
+import { auth, getFirebaseErrorLogDetails } from "@/lib/firebase";
 import { createAccessRequestNotification } from "@/lib/notifications";
+import { getUsernameValidationMessage, normalizeUsername } from "@/lib/username";
 
 function createClientError(code: string) {
   return Object.assign(new Error(code), { code });
 }
 
 const emailActionSettings: ActionCodeSettings = {
-  url: `${APP_URL}/login`,
+  url: APP_URL + "/login",
   handleCodeInApp: false,
 };
 
-const usernamePattern = /^[a-z0-9._-]{3,30}$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type ProfessionalEmailResponse = {
   sent?: boolean;
   code?: string;
 };
 
-export function normalizeUsername(username: string) {
-  return username.trim().toLowerCase();
-}
+type ApiResponse = {
+  email?: string;
+  code?: string;
+};
 
-export function getUsernameValidationMessage(username: string) {
-  const cleanUsername = normalizeUsername(username);
-
-  if (!cleanUsername) return "Ingrese un usuario.";
-  if (cleanUsername.length < 3) return "El usuario debe tener al menos 3 caracteres.";
-  if (cleanUsername.length > 30) return "El usuario no puede tener más de 30 caracteres.";
-  if (!usernamePattern.test(cleanUsername)) {
-    return "El usuario solo puede contener letras, números, punto, guion bajo o guion medio.";
-  }
-
-  return null;
-}
+export { getUsernameValidationMessage, normalizeUsername } from "@/lib/username";
 
 async function postProfessionalEmail(endpoint: string, body: Record<string, string>) {
   const response = await fetch(endpoint, {
@@ -69,14 +60,62 @@ async function sendProfessionalPasswordResetEmail(email: string) {
   return postProfessionalEmail("/api/auth/send-password-reset", { email });
 }
 
-export async function loginWithEmail(email: string, password: string) {
-  return signInWithEmailAndPassword(auth, email, password);
+async function resolveLoginEmail(identifier: string) {
+  const cleanIdentifier = identifier.trim().toLowerCase();
+  if (emailPattern.test(cleanIdentifier)) {
+    return cleanIdentifier;
+  }
+
+  const username = normalizeUsername(cleanIdentifier);
+  if (getUsernameValidationMessage(username)) {
+    throw createClientError("auth/invalid-credential");
+  }
+
+  const response = await fetch("/api/auth/resolve-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identifier: username }),
+  });
+  const payload = (await response.json().catch(() => ({}))) as ApiResponse;
+
+  if (!response.ok || !payload.email || !emailPattern.test(payload.email)) {
+    throw createClientError("auth/invalid-credential");
+  }
+
+  return payload.email;
+}
+
+async function createRegistrationProfile(user: User, name: string, username: string) {
+  const idToken = await user.getIdToken();
+  const response = await fetch("/api/auth/register-profile", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + idToken,
+    },
+    body: JSON.stringify({ name, username }),
+  });
+  const payload = (await response.json().catch(() => ({}))) as ApiResponse;
+
+  if (!response.ok) {
+    throw createClientError(payload.code ?? "registration/profile-create-failed");
+  }
+}
+
+export async function loginWithIdentifier(identifier: string, password: string) {
+  try {
+    const email = await resolveLoginEmail(identifier);
+    return await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    console.error("Login error:", getFirebaseErrorLogDetails(error));
+    throw createClientError("auth/invalid-credential");
+  }
 }
 
 export async function registerWithEmail(name: string, username: string, email: string, password: string) {
   const cleanName = name.trim();
   const cleanUsername = normalizeUsername(username);
-  const cleanEmail = email.trim();
+  const cleanEmail = email.trim().toLowerCase();
 
   if (!cleanName) {
     throw createClientError("validation/missing-name");
@@ -96,7 +135,21 @@ export async function registerWithEmail(name: string, username: string, email: s
 
   const credential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
 
-  await updateProfile(credential.user, { displayName: cleanName });
+  try {
+    await updateProfile(credential.user, { displayName: cleanName });
+  } catch (error) {
+    await deleteUser(credential.user).catch(() => undefined);
+    await signOut(auth).catch(() => undefined);
+    console.error("Registration profile error:", getFirebaseErrorLogDetails(error));
+    throw createClientError("registration/profile-create-failed");
+  }
+
+  try {
+    await createRegistrationProfile(credential.user, cleanName, cleanUsername);
+  } catch (error) {
+    await signOut(auth).catch(() => undefined);
+    throw error;
+  }
 
   const userProfile = {
     id: credential.user.uid,
@@ -109,16 +162,6 @@ export async function registerWithEmail(name: string, username: string, email: s
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-
-  try {
-    await setDoc(doc(db, "users", credential.user.uid), {
-      ...userProfile,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  } catch {
-    throw createClientError("registration/profile-create-failed");
-  }
 
   try {
     await createAccessRequestNotification(userProfile);

@@ -332,6 +332,10 @@ service cloud.firestore {
         );
       allow delete: if false;
     }
+    match /usernames/{username} {
+      // El índice de acceso se administra exclusivamente desde endpoints server-side.
+      allow read, write: if false;
+    }
     match /users/{userId} {
       // Pending y disabled solo pueden leer su propio perfil. El Técnico consulta
       // la clínica completa; el Dueño solo su perfil y cuentas de Administrador.
@@ -341,24 +345,9 @@ service cloud.firestore {
       );
       allow list: if canReadUserResource();
 
-      allow create: if signedIn()
-        && request.auth.uid == userId
-        && request.resource.data.keys().hasAll([
-          'id', 'clinicId', 'name', 'username', 'email', 'role', 'status', 'createdAt', 'updatedAt'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'id', 'clinicId', 'name', 'username', 'email', 'role', 'status', 'createdAt', 'updatedAt'
-        ])
-        && request.resource.data.id == userId
-        && request.resource.data.clinicId == 'clinic_dr_oscar_dubon'
-        && request.resource.data.name is string
-        && request.resource.data.username is string
-        && request.resource.data.username.matches('^[a-z0-9._-]{3,30}$')
-        && request.resource.data.email is string
-        && request.resource.data.role == 'admin'
-        && request.resource.data.status == 'pending'
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time;
+      // Los perfiles y reservas de usuario se crean únicamente desde el endpoint
+      // server-side validado con Firebase Admin.
+      allow create: if false;
 
       // El Dueño operativo solo puede aprobar, deshabilitar o habilitar administradores.
       allow update: if businessOwner()

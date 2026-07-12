@@ -1,6 +1,6 @@
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { CLINIC_ID } from "@/lib/constants";
-import { db, getFirebaseErrorLogDetails } from "@/lib/firebase";
+import { auth, db, getFirebaseErrorLogDetails } from "@/lib/firebase";
 import { createUserApprovedNotification, createUserDisabledNotification, createUserEnabledNotification } from "@/lib/notifications";
 import { canApproveUsers, canAssignRoles, canDisableUsers, canEnableUsers, isCriticalRole } from "@/lib/roles";
 import type { Role } from "@/types/role";
@@ -215,4 +215,53 @@ export async function updateUserRole(userId: string, role: Role, currentUserProf
     role,
     updatedAt: serverTimestamp(),
   });
+}
+
+type DeleteUserResponse = {
+  deleted?: boolean;
+  code?: string;
+};
+
+export async function deleteUserSafely(userId: string) {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+  }
+
+  let response: Response;
+  let payload: DeleteUserResponse;
+
+  try {
+    const idToken = await currentUser.getIdToken();
+    response = await fetch("/api/users/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + idToken,
+      },
+      body: JSON.stringify({ targetUserId: userId }),
+    });
+    payload = (await response.json().catch(() => ({}))) as DeleteUserResponse;
+  } catch (error) {
+    console.error("Safe user deletion client error:", getFirebaseErrorLogDetails(error));
+    throw new Error("No se pudo eliminar la cuenta en este momento. Intenta nuevamente.");
+  }
+
+  if (response.ok && payload.deleted) {
+    return;
+  }
+
+  if (payload.code === "users/has-history") {
+    throw new Error("Este usuario tiene historial en el sistema. Puedes deshabilitarlo, pero no eliminarlo.");
+  }
+
+  if (payload.code === "users/not-authorized") {
+    throw new Error("No tienes permiso para eliminar este usuario.");
+  }
+
+  if (payload.code === "users/delete-unavailable") {
+    throw new Error("No se pudo eliminar la cuenta en este momento. Contacta al encargado del sistema.");
+  }
+
+  throw new Error("No se pudo eliminar el usuario. Intenta nuevamente.");
 }

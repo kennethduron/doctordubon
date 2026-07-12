@@ -72,13 +72,14 @@ export function getFirebaseErrorMessage(
     "validation/missing-email": "Ingrese el correo.",
     "validation/invalid-username":
       "El usuario debe tener entre 3 y 30 caracteres y usar solo letras, números, punto, guion bajo o guion medio.",
+    "registration/username-in-use": "Este usuario ya está en uso. Elige otro.",
     "registration/profile-create-failed":
       "La cuenta fue creada, pero no se pudo completar el perfil de acceso. Contacta al encargado del sistema.",
     "registration/verification-email-failed":
       "La cuenta fue creada, pero no se pudo enviar el correo de verificación. Puedes solicitar otro enlace desde la pantalla de acceso.",
-    "auth/invalid-credential": "Correo o contraseña incorrectos.",
-    "auth/user-not-found": "No existe una cuenta con este correo.",
-    "auth/wrong-password": "La contraseña es incorrecta.",
+    "auth/invalid-credential": "Usuario, correo o contraseña incorrectos.",
+    "auth/user-not-found": "Usuario, correo o contraseña incorrectos.",
+    "auth/wrong-password": "Usuario, correo o contraseña incorrectos.",
     "auth/too-many-requests": "Demasiados intentos. Espera unos minutos antes de solicitar otro enlace.",
     "auth/invalid-email": "El correo no es válido.",
     "auth/email-already-in-use": "Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.",

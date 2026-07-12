@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select } from "@/components/ui/select";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useAuth } from "@/context/auth-context";
-import { approveUser, disableUser, enableUser, getUsersByClinic, updateUserRole } from "@/lib/users";
-import { canApproveUsers, canAssignRoles, canDisableUsers, canEnableUsers, roleLabels } from "@/lib/roles";
+import { approveUser, deleteUserSafely, disableUser, enableUser, getUsersByClinic, updateUserRole } from "@/lib/users";
+import { canApproveUsers, canAssignRoles, canDeleteUsers, canDisableUsers, canEnableUsers, roleLabels } from "@/lib/roles";
 import { formatDate } from "@/lib/utils";
 import type { Role } from "@/types/role";
 import type { UserProfile, UserStatus } from "@/types/user";
@@ -69,6 +70,11 @@ function canCurrentUserEnableTarget(currentRole: Role | null, targetRole: Role) 
   return currentRole === "technical_owner" || (currentRole === "business_owner" && targetRole === "admin");
 }
 
+function canCurrentUserDeleteTarget(currentRole: Role | null, targetRole: Role) {
+  if (currentRole === "technical_owner") return targetRole !== "technical_owner";
+  return currentRole === "business_owner" && targetRole === "admin";
+}
+
 export function UsersTable() {
   const { role, userProfile, refreshUserProfile } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -80,6 +86,7 @@ export function UsersTable() {
   const canApprove = canApproveUsers(role);
   const canDisable = canDisableUsers(role);
   const canEnable = canEnableUsers(role);
+  const canDelete = canDeleteUsers(role);
   const canAssign = canAssignRoles(role);
 
   const loadUsers = useCallback(async () => {
@@ -125,6 +132,7 @@ export function UsersTable() {
       }
       setMessage(successMessage);
     } catch (actionError) {
+      await loadUsers();
       setError(actionError instanceof Error ? actionError.message : "No se pudo completar la acción.");
     } finally {
       setSavingUserId(null);
@@ -146,6 +154,15 @@ export function UsersTable() {
     await runUserAction(user.id, () => enableUser(user.id, userProfile), "Usuario habilitado correctamente.");
   }
 
+  async function handleDelete(user: UserProfile) {
+    const confirmed = window.confirm(
+      "¿Seguro que deseas eliminar este usuario? Esta acción no se puede deshacer.",
+    );
+    if (!confirmed) return;
+
+    await runUserAction(user.id, () => deleteUserSafely(user.id), "Usuario eliminado correctamente.");
+  }
+
   async function handleRoleChange(user: UserProfile, nextRole: Role) {
     if (!userProfile || user.role === nextRole) return;
     await runUserAction(user.id, () => updateUserRole(user.id, nextRole, userProfile), "Rol actualizado correctamente.");
@@ -165,8 +182,18 @@ export function UsersTable() {
     const canEnableTarget = canEnable
       && user.status === "disabled"
       && canCurrentUserEnableTarget(role, user.role);
+    const canDeleteTarget = !isCurrentUser
+      && canDelete
+      && canCurrentUserDeleteTarget(role, user.role);
 
-    return { actionDisabled, protectsSelf, canApproveTarget, canDisableTarget, canEnableTarget };
+    return {
+      actionDisabled,
+      protectsSelf,
+      canApproveTarget,
+      canDisableTarget,
+      canEnableTarget,
+      canDeleteTarget,
+    };
   }
 
   function renderRole(user: UserProfile, mobile = false) {
@@ -197,7 +224,13 @@ export function UsersTable() {
   }
 
   function renderActions(user: UserProfile) {
-    const { actionDisabled, canApproveTarget, canDisableTarget, canEnableTarget } = getActionState(user);
+    const {
+      actionDisabled,
+      canApproveTarget,
+      canDisableTarget,
+      canEnableTarget,
+      canDeleteTarget,
+    } = getActionState(user);
 
     return (
       <div className="flex flex-wrap gap-2">
@@ -214,6 +247,12 @@ export function UsersTable() {
         {canEnableTarget ? (
           <Button type="button" variant="secondary" disabled={actionDisabled} onClick={() => void handleEnable(user)}>
             {actionDisabled ? "Guardando..." : "Habilitar"}
+          </Button>
+        ) : null}
+        {canDeleteTarget ? (
+          <Button type="button" variant="danger" disabled={actionDisabled} onClick={() => void handleDelete(user)}>
+            <Trash2 size={16} aria-hidden="true" />
+            {actionDisabled ? "Eliminando..." : "Eliminar"}
           </Button>
         ) : null}
         <Button type="button" variant="subtle" disabled={actionDisabled} onClick={() => setDetailUser(user)}>

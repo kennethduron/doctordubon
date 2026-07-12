@@ -140,7 +140,7 @@ export default function RegisterPage() {
           />
         </div>
         <p id="username-help" className="text-xs leading-5 text-slate-500">
-          El usuario tendrá entre 3 y 30 caracteres y puede incluir letras, números, punto, guion bajo o guion medio.
+          El usuario tendrá entre 3 y 30 caracteres. Puede usar letras, números, punto, guion bajo o guion medio; si escribes @ al inicio, se omitirá.
         </p>
         {error ? <p className="rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{error}</p> : null}
         {success ? <p className="rounded-md bg-mint p-3 text-sm leading-6 font-medium text-mint-strong">{success}</p> : null}

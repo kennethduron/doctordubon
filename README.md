@@ -31,6 +31,12 @@ Firebase no se usa como hosting, dominio ni deploy de la app web. Vercel no publ
 - `firestore.rules`
 - `firestore.indexes.json`
 
+## Acceso con correo o usuario
+
+El inicio de sesión acepta el correo electrónico o el nombre de usuario normalizado. Cuando se usa el nombre de usuario, un endpoint server-side consulta el índice privado de nombres de usuario y entrega únicamente el correo necesario al cliente; Firebase Authentication continúa validando internamente el correo y la contraseña.
+
+El nombre de usuario es un identificador visual y de acceso. Se guarda en minúsculas, omite un @ inicial, admite de 3 a 30 letras, números, puntos, guiones bajos o guiones medios y se reserva de forma transaccional para evitar duplicados. La colección de nombres de usuario no tiene lectura ni escritura directa desde el cliente.
+
 ## Notificaciones internas
 
 El sistema incluye un centro de notificaciones interno basado en la colección `notifications` de Cloud Firestore. La campana del encabezado muestra notificaciones no leídas, permite revisar las más recientes y marcarlas como leídas.
@@ -41,6 +47,7 @@ Eventos cubiertos en esta fase:
 - Cuenta aprobada para el usuario aprobado.
 - Acceso habilitado para la cuenta reactivada.
 - Cuenta deshabilitada mediante un aviso operativo genérico.
+- Cuenta sin historial eliminada mediante un aviso operativo genérico.
 - Ingreso o gasto registrado para responsables operativos.
 - Movimiento retirado del listado activo para responsables operativos.
 
@@ -57,6 +64,12 @@ La pantalla `Usuarios y permisos` permite revisar solicitudes pendientes, usuari
 - El Administrador no accede a la administración de usuarios.
 
 Las reglas de Firestore deben estar publicadas para que estas restricciones también apliquen en la base de datos.
+
+## Eliminación segura de usuarios
+
+La eliminación completa se ejecuta únicamente desde un endpoint server-side autenticado con Firebase Admin. El Técnico operativo puede eliminar cuentas de Dueño operativo o Administrador, excepto su propia cuenta y cualquier Técnico operativo. El Dueño operativo solo puede eliminar cuentas de Administrador visibles. El Administrador no administra usuarios.
+
+Antes de borrar, el servidor revisa con consultas limitadas si la cuenta creó, editó o retiró movimientos, o si registró cambios importantes de configuración. Si existe cualquier historial, la cuenta no se elimina y debe deshabilitarse. Si no existe historial, se eliminan la identidad de acceso, el perfil y la reserva del nombre de usuario; las notificaciones históricas no se borran. No se requieren índices compuestos adicionales.
 
 ## Checklist
 
@@ -94,6 +107,8 @@ NEXT_PUBLIC_APP_URL=https://doctordubon.vercel.app
 ```
 
 `FIREBASE_ADMIN_PRIVATE_KEY` debe guardarse solo en Vercel, con saltos de línea escapados como `\n` si Vercel lo requiere. No se debe subir al repositorio.
+
+Las variables FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL y FIREBASE_ADMIN_PRIVATE_KEY también son obligatorias para resolver nombres de usuario, reservar usuarios únicos y eliminar cuentas sin historial.
 
 Para mejorar entregabilidad y reducir spam, configura y verifica un dominio de envío propio en Resend. Sin dominio verificado, los correos pueden seguir llegando a spam aunque el diseño y el flujo estén listos.
 

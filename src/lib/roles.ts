@@ -22,6 +22,10 @@ export function canEnableUsers(role?: Role | null) {
   return role === "technical_owner" || role === "business_owner";
 }
 
+export function canDeleteUsers(role?: Role | null) {
+  return role === "technical_owner" || role === "business_owner";
+}
+
 export function canAssignRoles(role?: Role | null) {
   return role === "technical_owner";
 }

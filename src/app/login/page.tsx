@@ -5,18 +5,17 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { PasswordInput } from "@/components/auth/password-input";
+import { AppLoading } from "@/components/ui/app-loading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AppLoading } from "@/components/ui/app-loading";
 import { useAuth } from "@/context/auth-context";
-import { loginWithEmail } from "@/lib/auth";
+import { loginWithIdentifier } from "@/lib/auth";
 import { APP_NAME, CLINIC_NAME } from "@/lib/constants";
-import { getFirebaseErrorMessage } from "@/lib/firebase";
 
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuth();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -31,18 +30,21 @@ export default function LoginPage() {
     event.preventDefault();
     setError(null);
 
-    if (!email.trim() || !password.trim()) {
-      setError("Ingrese correo y contraseña para continuar.");
+    if (!identifier.trim() || !password.trim()) {
+      setError("Ingrese su correo o usuario y contraseña para continuar.");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      await loginWithEmail(email.trim(), password);
+      await loginWithIdentifier(identifier, password);
       router.replace("/dashboard");
     } catch (loginError) {
-      setError(getFirebaseErrorMessage(loginError));
+      console.error("Login UI error:", {
+        name: loginError instanceof Error ? loginError.name : null,
+      });
+      setError("Usuario, correo o contraseña incorrectos.");
     } finally {
       setSubmitting(false);
     }
@@ -60,15 +62,18 @@ export default function LoginPage() {
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <Input
-          id="email"
-          label="Correo electrónico"
-          type="email"
-          autoComplete="email"
-          placeholder="correo@ejemplo.com"
-          value={email}
+          id="identifier"
+          label="Correo electrónico o usuario"
+          type="text"
+          autoComplete="username"
+          placeholder="correo@ejemplo.com o usuario"
+          value={identifier}
           required
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => setIdentifier(event.target.value)}
         />
+        <p className="text-xs leading-5 text-slate-500">
+          Puedes entrar con tu correo o con el usuario que creaste.
+        </p>
         <PasswordInput
           id="password"
           label="Contraseña"

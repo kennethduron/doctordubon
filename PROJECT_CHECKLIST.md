@@ -15,6 +15,8 @@
 
 - [x] Técnico operativo activo según confirmación operativa.
 - [x] Login probado.
+- [x] Login por correo o nombre de usuario implementado.
+- [x] Registro con nombre de usuario único y normalizado implementado.
 - [x] Registro y correo de verificación probados.
 - [x] Estado de cuenta pendiente probado.
 - [x] Dashboard probado.
@@ -25,6 +27,8 @@
 - [x] Acceso a Configuración protegido por rol.
 - [x] Usuarios deshabilitados muestran acción “Habilitar” cuando corresponde.
 - [ ] Probar una cuenta deshabilitada en el flujo final.
+- [ ] Probar en producción login por usuario y eliminación de una cuenta sin historial.
+- [ ] Confirmar que una cuenta con historial no puede eliminarse.
 - [ ] Probar cerrar sesión nuevamente durante la aceptación final.
 
 ## Datos y seguridad
@@ -39,7 +43,10 @@
 - [x] El Dueño operativo no ve ni puede modificar al Técnico operativo ni a otros Dueños operativos.
 - [x] Solo el Técnico operativo puede asignar roles de mayor acceso.
 - [x] Las cuentas pendientes o deshabilitadas solo pueden consultar su propio perfil.
-- [x] No existe eliminación física de usuarios ni movimientos.
+- [x] Los usuarios sin historial pueden eliminarse únicamente mediante el endpoint server-side autorizado.
+- [x] Los usuarios con historial financiero o actividad importante solo pueden deshabilitarse.
+- [x] No existe eliminación física de movimientos.
+- [x] La colección privada de nombres de usuario evita duplicados y no permite acceso directo desde cliente.
 - [x] Reglas locales agregadas para `notifications`: lectura por rol, marcado como leído y sin borrado físico desde cliente.
 - [ ] Confirmar manualmente que `firestore.rules` está publicado en el proyecto de producción.
 - [ ] Confirmar manualmente que `firestore.indexes.json` está publicado en el proyecto de producción.

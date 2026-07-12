@@ -2,7 +2,7 @@
 
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CLINIC_ID } from "@/lib/constants";
 import { logout as firebaseLogout } from "@/lib/auth";
@@ -78,36 +78,14 @@ function normalizeProfile(data: Record<string, unknown>, fallbackUser: User): Us
   };
 }
 
-async function getOrCreateUserProfile(currentUser: User) {
-  const userRef = doc(db, "users", currentUser.uid);
-  const snapshot = await getDoc(userRef);
+async function getUserProfile(currentUser: User) {
+  const snapshot = await getDoc(doc(db, "users", currentUser.uid));
 
-  if (snapshot.exists()) {
-    return normalizeProfile(snapshot.data(), currentUser);
+  if (!snapshot.exists()) {
+    throw new Error("El perfil de acceso todavía no está disponible.");
   }
 
-  const now = new Date().toISOString();
-  const profile: UserProfile = {
-    id: currentUser.uid,
-    clinicId: CLINIC_ID,
-    name: currentUser.displayName ?? "Usuario del consultorio",
-    username: fallbackUsername(currentUser),
-    email: currentUser.email ?? "",
-    role: "admin",
-    status: "pending",
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  // Seguridad: el primer Técnico operativo debe configurarse manualmente en Firestore
-  // o mediante un seed controlado en una fase posterior. No se eleva ningún usuario automáticamente.
-  await setDoc(userRef, {
-    ...profile,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  return profile;
+  return normalizeProfile(snapshot.data(), currentUser);
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -126,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfileError(null);
 
     try {
-      const profile = await getOrCreateUserProfile(auth.currentUser);
+      const profile = await getUserProfile(auth.currentUser);
       setUserProfile(profile);
     } catch {
       setUserProfile(null);
@@ -142,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         if (currentUser) {
-          const profile = await getOrCreateUserProfile(currentUser);
+          const profile = await getUserProfile(currentUser);
           setUserProfile(profile);
         } else {
           setUserProfile(null);
