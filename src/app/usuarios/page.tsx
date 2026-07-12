@@ -28,8 +28,8 @@ export default function UsersPage() {
         </CardHeader>
         <CardContent className={'grid gap-3 text-sm leading-6 text-slate-600'}>
           <p>El Administrador puede registrar movimientos y consultar reportes, pero no puede aprobar usuarios ni asignar roles.</p>
-          <p>El Dueño operativo puede aprobar o deshabilitar administradores, pero no puede modificar al Técnico operativo.</p>
-          <p>Solo el Técnico operativo puede asignar o modificar roles críticos.</p>
+          <p>El Dueño operativo solo puede aprobar o deshabilitar Administradores; no puede modificar al Técnico operativo.</p>
+          <p>Solo el Técnico operativo puede asignar o modificar los roles de mayor acceso.</p>
         </CardContent>
       </Card>
     </AppShell>

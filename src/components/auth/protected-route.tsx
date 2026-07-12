@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -180,7 +180,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
       <CenteredMessage
         title="Cuenta pendiente de aprobación"
-        description="Tu cuenta está pendiente de aprobación. Un Técnico operativo debe activar tu acceso."
+        description="Tu cuenta está pendiente de aprobación. El Técnico operativo o el Dueño operativo debe activar tu acceso antes de ingresar al sistema."
       >
         <div className="grid gap-4">
           <p className="rounded-md bg-primary-soft p-4 text-sm leading-6 text-primary">

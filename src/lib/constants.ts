@@ -1,4 +1,4 @@
-﻿import type { PaymentMethod } from "@/types/movement";
+import type { PaymentMethod } from "@/types/movement";
 import type { PermissionNote } from "@/types/role";
 
 export const CLINIC_ID = "clinic_dr_oscar_dubon";
@@ -43,7 +43,7 @@ export const roleRules: PermissionNote[] = [
   {
     role: "technical_owner",
     title: "Acceso total",
-    description: "Puede administrar configuraciones técnicas críticas, finanzas, usuarios y roles.",
+    description: "Puede administrar la configuración general, las finanzas, los usuarios y sus permisos.",
   },
   {
     role: "business_owner",

@@ -1,4 +1,4 @@
-﻿import { FirebaseError, initializeApp, getApps, getApp } from "firebase/app";
+import { FirebaseError, initializeApp, getApps, getApp } from "firebase/app";
 import type { FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import type { Auth } from "firebase/auth";
@@ -23,30 +23,10 @@ export const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || fallbackConfig.appId,
 };
 
-export function isFirebaseConfigured() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
-      process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
-      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET &&
-      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID &&
-      process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  );
-}
-
 export const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth: Auth = getAuth(app);
 auth.languageCode = "es";
 export const db: Firestore = getFirestore(app);
-
-export function getFirebasePlaceholder() {
-  return {
-    ready: isFirebaseConfigured(),
-    message: isFirebaseConfigured()
-      ? "Firebase Authentication y Cloud Firestore están configurados."
-      : "Configura las variables de Firebase en .env.local para activar Auth y Firestore.",
-  };
-}
 
 export function getFirebaseErrorMessage(
   error: unknown,

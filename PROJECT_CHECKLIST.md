@@ -1,64 +1,65 @@
 # Checklist del Proyecto
 
-## Producción
+## Producción y presentación
 
-- [x] Variables reportadas como configuradas en Vercel para Production.
-- [ ] Confirmar variables en Vercel para Preview.
-- [x] URL final esperada: https://doctordubon.vercel.app
-- [x] Hosting definido en Vercel, no Firebase Hosting.
-- [ ] Confirmar dominio autorizado en Firebase Auth: doctordubon.vercel.app
-- [x] Build final local confirmado para producción.
+- [x] Producción funcionando en Vercel.
+- [x] URL pública funcionando: https://doctordubon.vercel.app
+- [x] Vercel confirmado como hosting; Firebase Hosting no se utiliza.
+- [x] Favicon publicado y respondiendo correctamente.
+- [x] Metadatos Open Graph e imagen social publicados y respondiendo correctamente.
+- [x] Build local de producción confirmado.
+- [ ] Confirmar variables del entorno Preview, si se utilizará para pruebas futuras.
+- [ ] Confirmar manualmente el dominio autorizado para inicio de sesión.
 
-## Firebase
+## Acceso y navegación
 
-- [x] Firebase Authentication integrado en el código.
-- [x] Cloud Firestore integrado en el código.
-- [x] `firebase.json` limitado a reglas e índices de Firestore, sin sección `hosting`.
-- [ ] Publicar o confirmar publicación de `firestore.rules`.
-- [ ] Publicar o confirmar publicación de `firestore.indexes.json`.
-- [x] Primer Técnico operativo activo según confirmación operativa.
-- [ ] Confirmar Email/Password habilitado en Firebase Authentication.
-- [x] FCM/notificaciones push queda como funcionalidad futura, sin implementación actual.
+- [x] Técnico operativo activo según confirmación operativa.
+- [x] Login probado.
+- [x] Registro y correo de verificación probados.
+- [x] Estado de cuenta pendiente probado.
+- [x] Dashboard probado.
+- [x] Sidebar probado.
+- [x] Topbar probado.
+- [x] Navegación móvil probada.
+- [x] Acceso a Usuarios y permisos protegido por rol.
+- [x] Acceso a Configuración protegido por rol.
+- [ ] Probar una cuenta deshabilitada en el flujo final.
+- [ ] Probar cerrar sesión nuevamente durante la aceptación final.
 
-## Pruebas funcionales
+## Datos y seguridad
 
-- [x] Probar registro y correo de verificación.
-- [x] Probar login.
-- [x] Probar cuenta pendiente.
-- [ ] Probar cuenta deshabilitada.
-- [ ] Probar aprobación de cuenta.
-- [ ] Probar crear ingreso con datos reales.
-- [ ] Probar crear gasto con datos reales.
-- [x] Revisar libro diario y flujo de edición/eliminación lógica.
-- [x] Revisar reportes y estados vacíos.
-- [x] Revisar exportar PDF.
-- [x] Revisar exportar Excel.
-- [x] Revisar administración de usuarios por rol.
-- [x] Revisar configuración del consultorio.
-- [ ] Probar cerrar sesión en producción.
+- [x] Autenticación y base de datos integradas.
+- [x] `firebase.json` limitado a reglas e índices, sin configuración de hosting.
+- [x] El Administrador no puede administrar usuarios ni configuración.
+- [x] El Administrador no puede editar ni eliminar movimientos.
+- [x] El Dueño operativo solo puede administrar Administradores.
+- [x] El Dueño operativo no puede modificar ni deshabilitar al Técnico operativo.
+- [x] Solo el Técnico operativo puede asignar roles de mayor acceso.
+- [x] Las cuentas pendientes o deshabilitadas solo pueden consultar su propio perfil.
+- [x] No existe eliminación física de usuarios ni movimientos.
+- [ ] Confirmar manualmente que `firestore.rules` está publicado en el proyecto de producción.
+- [ ] Confirmar manualmente que `firestore.indexes.json` está publicado en el proyecto de producción.
 
-## Seguridad por rol
+## Funciones operativas revisadas
 
-- [x] Confirmar que Admin no vea Usuarios ni Configuración en navegación.
-- [x] Confirmar que Admin no pueda entrar manualmente a Usuarios ni Configuración.
-- [x] Confirmar que Admin no pueda editar ni eliminar movimientos.
-- [x] Confirmar que Dueño operativo no modifique Técnicos operativos.
-- [x] Confirmar que pending/disabled solo puedan leer su perfil.
-- [x] Confirmar que no exista delete físico de usuarios o movimientos.
+- [x] Crear ingresos y gastos disponible para usuarios activos autorizados.
+- [x] Libro diario y edición o retiro de movimientos revisados.
+- [x] Reportes y estados vacíos revisados.
+- [x] Exportación a PDF revisada.
+- [x] Exportación a Excel revisada.
+- [x] Configuración del consultorio revisada.
+- [x] Diseño de computadora, tablet y celular revisado.
 
-## Responsive
+## Pendiente para aceptación final
 
-- [x] Revisar layout de computadora.
-- [x] Revisar layout de tablet por estructura responsive.
-- [x] Revisar layout de celular por navegación móvil y tarjetas.
-- [x] Confirmar formularios en una columna en móvil.
-- [x] Confirmar tablas con scroll o tarjetas en móvil.
-- [x] Confirmar navegación móvil filtrada por rol.
-
-## Pendiente de aceptación presencial
-
-- [ ] Crear ingreso real frente al Dr. Oscar Dubon.
-- [ ] Crear gasto real frente al Dr. Oscar Dubon.
-- [ ] Exportar PDF real y revisar contenido descargado.
-- [ ] Exportar Excel real y revisar hojas descargadas.
-- [ ] Confirmar reglas e índices publicados en Firebase Console.
+- [ ] Prueba real del Dr. Oscar Dubon creando su cuenta.
+- [ ] Verificar que la cuenta del Dr. Oscar Dubon quede pendiente.
+- [ ] Asignar al Dr. Oscar Dubon el rol Dueño operativo mediante el Técnico operativo.
+- [ ] Aprobar y mantener activa la cuenta del Dr. Oscar Dubon.
+- [ ] Realizar prueba presencial de ingreso, gasto, libro diario y reporte.
+- [ ] Exportar y revisar presencialmente un PDF con datos reales.
+- [ ] Exportar y revisar presencialmente un Excel con datos reales.
+- [ ] Confirmar en celular que el flujo principal sea cómodo para el doctor.
+- [ ] Confirmar con la cuenta del doctor que no puede modificar al Técnico operativo.
+- [ ] Resend: fase futura para correos personalizados; no implementado en esta entrega.
+- [ ] FCM: fase futura para notificaciones; no implementado en esta entrega.

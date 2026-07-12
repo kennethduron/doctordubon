@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -19,9 +19,35 @@ const statusLabels: Record<UserStatus, string> = {
   disabled: "Deshabilitado",
 };
 
+const statusGroups: Array<{
+  status: UserStatus;
+  title: string;
+  description: string;
+  emptyMessage: string;
+}> = [
+  {
+    status: "pending",
+    title: "Solicitudes pendientes",
+    description: "Usuarios que solicitaron acceso al sistema y esperan aprobación.",
+    emptyMessage: "No hay solicitudes pendientes.",
+  },
+  {
+    status: "active",
+    title: "Usuarios activos",
+    description: "Personas con acceso habilitado al sistema.",
+    emptyMessage: "No hay usuarios activos.",
+  },
+  {
+    status: "disabled",
+    title: "Usuarios deshabilitados",
+    description: "Cuentas sin acceso activo al sistema.",
+    emptyMessage: "No hay usuarios deshabilitados.",
+  },
+];
+
 const roleOptions: Array<{ value: Role; label: string }> = [
-  { value: "admin", label: "Administrador" },
   { value: "business_owner", label: "Dueño operativo" },
+  { value: "admin", label: "Administrador" },
   { value: "technical_owner", label: "Técnico operativo" },
 ];
 
@@ -115,22 +141,80 @@ export function UsersTable() {
     await runUserAction(user.id, () => updateUserRole(user.id, nextRole, userProfile), "Rol actualizado correctamente.");
   }
 
+  function getActionState(user: UserProfile) {
+    const actionDisabled = savingUserId === user.id;
+    const protectsSelf = user.id === userProfile?.id && user.role === "technical_owner";
+    const canApproveTarget = canApprove
+      && user.status === "pending"
+      && canCurrentUserApproveTarget(role, user.role);
+    const canDisableTarget = !protectsSelf
+      && canDisable
+      && user.status !== "disabled"
+      && canCurrentUserDisableTarget(role, user.role);
+
+    return { actionDisabled, protectsSelf, canApproveTarget, canDisableTarget };
+  }
+
+  function renderRole(user: UserProfile, mobile = false) {
+    const { actionDisabled, protectsSelf } = getActionState(user);
+
+    if (!canAssign || protectsSelf) {
+      return mobile ? (
+        <div>
+          <p className="text-xs font-medium text-slate-500">Rol</p>
+          <p className="mt-1 text-sm font-semibold text-slate-800">{roleLabels[user.role]}</p>
+        </div>
+      ) : (
+        <span className="font-medium text-slate-700">{roleLabels[user.role]}</span>
+      );
+    }
+
+    return (
+      <Select
+        id={`${mobile ? "mobile-" : ""}role-${user.id}`}
+        aria-label={mobile ? undefined : "Cambiar rol"}
+        label={mobile ? "Rol" : undefined}
+        options={roleOptions}
+        value={user.role}
+        disabled={actionDisabled}
+        onChange={(event) => void handleRoleChange(user, event.target.value as Role)}
+      />
+    );
+  }
+
+  function renderActions(user: UserProfile) {
+    const { actionDisabled, canApproveTarget, canDisableTarget } = getActionState(user);
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {canApproveTarget ? (
+          <Button type="button" variant="secondary" disabled={actionDisabled} onClick={() => void handleApprove(user)}>
+            {actionDisabled ? "Guardando..." : "Aprobar acceso"}
+          </Button>
+        ) : null}
+        {canDisableTarget ? (
+          <Button type="button" variant="secondary" disabled={actionDisabled} onClick={() => void handleDisable(user)}>
+            Deshabilitar
+          </Button>
+        ) : null}
+        <Button type="button" variant="subtle" disabled={actionDisabled} onClick={() => setDetailUser(user)}>
+          Ver detalle
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle>Usuarios del consultorio</CardTitle>
-          <CardDescription>Control de accesos financieros del consultorio.</CardDescription>
+          <CardDescription>Revise solicitudes, accesos habilitados y cuentas deshabilitadas.</CardDescription>
         </CardHeader>
         <CardContent>
           {!canAssign ? (
             <p className="mb-4 rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">
-              La asignación de roles está disponible solo para el Técnico operativo.
-            </p>
-          ) : null}
-          {!canApprove && !canDisable ? (
-            <p className="mb-4 rounded-md bg-primary-soft p-3 text-sm font-medium text-primary">
-              Su perfil puede consultar usuarios, pero no aprobar cuentas ni cambiar permisos.
+              El Dueño operativo puede administrar cuentas de Administrador. Solo el Técnico operativo puede asignar o cambiar roles.
             </p>
           ) : null}
           {message ? <p className="mb-4 rounded-md bg-mint p-3 text-sm font-medium text-mint-strong">{message}</p> : null}
@@ -144,91 +228,73 @@ export function UsersTable() {
             </div>
           ) : null}
 
-          {users.length > 0 ? (
-            <div className="hidden overflow-x-auto lg:block">
-              <Table>
-                <thead>
-                  <tr>
-                    <Th>Nombre</Th>
-                    <Th>Correo</Th>
-                    <Th>Rol</Th>
-                    <Th>Estado</Th>
-                    <Th>Fecha de creación</Th>
-                    <Th>Acciones</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => {
-                    const actionDisabled = savingUserId === user.id;
-                    const protectsSelf = user.id === userProfile?.id && user.role === "technical_owner";
-                    const canApproveTarget = canApprove && user.status === "pending" && canCurrentUserApproveTarget(role, user.role);
-                    const canDisableTarget = !protectsSelf && canDisable && user.status !== "disabled" && canCurrentUserDisableTarget(role, user.role);
-
-                    return (
-                      <tr key={user.id}>
-                        <Td className="font-medium text-slate-900">{user.name}</Td>
-                        <Td>{user.email}</Td>
-                        <Td>
-                          <Select
-                            id={`role-${user.id}`}
-                            aria-label="Cambiar rol"
-                            options={roleOptions}
-                            value={user.role}
-                            disabled={!canAssign || actionDisabled || protectsSelf}
-                            onChange={(event) => void handleRoleChange(user, event.target.value as Role)}
-                          />
-                        </Td>
-                        <Td><Badge variant={statusBadgeVariant(user.status)}>{statusLabels[user.status]}</Badge></Td>
-                        <Td>{formatDate(user.createdAt)}</Td>
-                        <Td>
-                          <div className="flex flex-wrap gap-2">
-                            <Button type="button" variant="secondary" disabled={!canApproveTarget || actionDisabled} onClick={() => void handleApprove(user)}>Aprobar</Button>
-                            <Button type="button" variant="secondary" disabled={!canDisableTarget || actionDisabled} onClick={() => void handleDisable(user)}>Deshabilitar</Button>
-                            <Button type="button" variant="subtle" onClick={() => setDetailUser(user)}>Ver detalle</Button>
-                          </div>
-                        </Td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </div>
-          ) : null}
-
-          {users.length > 0 ? (
-            <div className="grid gap-3 lg:hidden">
-              {users.map((user) => {
-                const actionDisabled = savingUserId === user.id;
-                const protectsSelf = user.id === userProfile?.id && user.role === "technical_owner";
-                const canApproveTarget = canApprove && user.status === "pending" && canCurrentUserApproveTarget(role, user.role);
-                const canDisableTarget = !protectsSelf && canDisable && user.status !== "disabled" && canCurrentUserDisableTarget(role, user.role);
+          {!loading && users.length > 0 ? (
+            <div className="grid gap-6">
+              {statusGroups.map((group) => {
+                const groupUsers = users.filter((user) => user.status === group.status);
 
                 return (
-                  <article key={user.id} className="rounded-md border border-border-soft bg-slate-50 p-4">
-                    <div className="flex items-start justify-between gap-3">
+                  <section key={group.status} className="overflow-hidden rounded-lg border border-border-soft">
+                    <div className="flex flex-col gap-2 bg-slate-50 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{user.name}</p>
-                        <p className="mt-1 text-xs text-slate-500">{user.email}</p>
+                        <h3 className="font-semibold text-slate-950">{group.title}</h3>
+                        <p className="mt-1 text-sm text-slate-500">{group.description}</p>
                       </div>
-                      <Badge variant={statusBadgeVariant(user.status)}>{statusLabels[user.status]}</Badge>
+                      <Badge variant={statusBadgeVariant(group.status)}>{groupUsers.length}</Badge>
                     </div>
-                    <div className="mt-4 grid gap-3">
-                      <Select
-                        id={`mobile-role-${user.id}`}
-                        label="Rol"
-                        options={roleOptions}
-                        value={user.role}
-                        disabled={!canAssign || actionDisabled || protectsSelf}
-                        onChange={(event) => void handleRoleChange(user, event.target.value as Role)}
-                      />
-                      <p className="text-xs text-slate-500">Creado: {formatDate(user.createdAt)}</p>
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <Button type="button" variant="secondary" disabled={!canApproveTarget || actionDisabled} onClick={() => void handleApprove(user)}>Aprobar</Button>
-                        <Button type="button" variant="secondary" disabled={!canDisableTarget || actionDisabled} onClick={() => void handleDisable(user)}>Deshabilitar</Button>
-                        <Button type="button" variant="subtle" onClick={() => setDetailUser(user)}>Ver detalle</Button>
-                      </div>
-                    </div>
-                  </article>
+
+                    {groupUsers.length === 0 ? (
+                      <p className="px-4 py-5 text-sm text-slate-500">{group.emptyMessage}</p>
+                    ) : (
+                      <>
+                        <div className="hidden overflow-x-auto lg:block">
+                          <Table>
+                            <thead>
+                              <tr>
+                                <Th>Nombre</Th>
+                                <Th>Correo</Th>
+                                <Th>Rol</Th>
+                                <Th>Estado</Th>
+                                <Th>Fecha de creación</Th>
+                                <Th>Acciones disponibles</Th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {groupUsers.map((user) => (
+                                <tr key={user.id}>
+                                  <Td className="font-medium text-slate-900">{user.name}</Td>
+                                  <Td>{user.email}</Td>
+                                  <Td>{renderRole(user)}</Td>
+                                  <Td><Badge variant={statusBadgeVariant(user.status)}>{statusLabels[user.status]}</Badge></Td>
+                                  <Td>{formatDate(user.createdAt)}</Td>
+                                  <Td>{renderActions(user)}</Td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+
+                        <div className="grid gap-3 p-3 lg:hidden">
+                          {groupUsers.map((user) => (
+                            <article key={user.id} className="rounded-md border border-border-soft bg-white p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-slate-900">{user.name}</p>
+                                  <p className="mt-1 text-xs text-slate-500">{user.email}</p>
+                                </div>
+                                <Badge variant={statusBadgeVariant(user.status)}>{statusLabels[user.status]}</Badge>
+                              </div>
+                              <div className="mt-4 grid gap-3">
+                                {renderRole(user, true)}
+                                <p className="text-xs text-slate-500">Creado: {formatDate(user.createdAt)}</p>
+                                {renderActions(user)}
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </section>
                 );
               })}
             </div>
@@ -242,7 +308,7 @@ export function UsersTable() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">Detalle del usuario</h2>
-                <p className="mt-1 text-sm text-slate-500">Información de acceso financiero.</p>
+                <p className="mt-1 text-sm text-slate-500">Información de acceso al sistema.</p>
               </div>
               <Badge variant={statusBadgeVariant(detailUser.status)}>{statusLabels[detailUser.status]}</Badge>
             </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
@@ -86,7 +86,7 @@ export default function RegisterPage() {
               </Button>
             </form>
             <p className="mt-4 rounded-md bg-primary-soft p-3 text-sm leading-6 text-primary">
-              La cuenta inicia como Administrador pendiente de aprobación. El Técnico operativo puede ajustar permisos críticos posteriormente.
+              Después de crear tu cuenta, quedará pendiente de aprobación. El Técnico operativo o el Dueño operativo deberá activar tu acceso.
             </p>
             <Link className="mt-5 block text-center text-sm font-semibold text-primary" href="/login">Volver a iniciar sesión</Link>
           </CardContent>
