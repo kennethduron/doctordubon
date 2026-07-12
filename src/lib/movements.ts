@@ -1,4 +1,4 @@
-﻿import {
+import {
   collection,
   doc,
   getDocs,
@@ -11,7 +11,8 @@
   where,
 } from "firebase/firestore";
 import { CLINIC_ID } from "@/lib/constants";
-import { db } from "@/lib/firebase";
+import { db, getFirebaseErrorLogDetails } from "@/lib/firebase";
+import { createMovementCreatedNotification, createMovementDeletedNotification } from "@/lib/notifications";
 import { getMonthDateRange, getTodayDate } from "@/lib/finance";
 import type { CreateMovementInput, Movement, PaymentMethod, UpdateMovementInput } from "@/types/movement";
 import type { UserProfile } from "@/types/user";
@@ -75,6 +76,17 @@ export async function createMovement(data: CreateMovementInput, userProfile: Use
     updatedAt: serverTimestamp(),
   });
 
+  try {
+    await createMovementCreatedNotification({
+      clinicId: userProfile.clinicId,
+      movementId: movementRef.id,
+      type: data.type,
+      amount: data.amount,
+    });
+  } catch (error) {
+    console.error("Notification creation error:", getFirebaseErrorLogDetails(error));
+  }
+
   return movementRef.id;
 }
 
@@ -125,6 +137,12 @@ export async function softDeleteMovement(movementId: string, userProfile: UserPr
     deletedBy: userProfile.id,
     updatedAt: serverTimestamp(),
   });
+
+  try {
+    await createMovementDeletedNotification(movementId, userProfile);
+  } catch (error) {
+    console.error("Notification creation error:", getFirebaseErrorLogDetails(error));
+  }
 }
 
 export async function getTodayMovements(clinicId: string) {

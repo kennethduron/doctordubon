@@ -135,7 +135,173 @@ service cloud.firestore {
         && data.updatedBy == request.auth.uid
         && data.updatedAt == request.time;
     }
+    function validNotificationType(value) {
+      return value in [
+        'access_request', 'user_approved', 'income_created', 'expense_created',
+        'movement_deleted', 'daily_review', 'system'
+      ];
+    }
 
+    function validNotificationSeverity(value) {
+      return value in ['info', 'success', 'warning', 'danger'];
+    }
+
+    function validNotificationAudience(value) {
+      return value in ['technical_owner', 'business_owner', 'admin', 'user', 'responsibles', 'all'];
+    }
+
+    function validOptionalRole(value) {
+      return value == '' || validRole(value);
+    }
+
+    function validNotificationRoleList(value) {
+      return value is list && value.hasOnly(['technical_owner', 'business_owner', 'admin']);
+    }
+
+    function validStringList(value) {
+      return value is list;
+    }
+
+    function notificationAvoidsTechnicalOwner(data) {
+      return data.actorRole != 'technical_owner'
+        && data.recipientUserRole != 'technical_owner'
+        && data.relatedUserRole != 'technical_owner';
+    }
+
+    function canReadNotificationResource() {
+      return activeUser()
+        && resource.data.clinicId == clinicId()
+        && (
+          technicalOwner()
+          || (
+            notificationAvoidsTechnicalOwner(resource.data)
+            && (
+              resource.data.visibleToRoles.hasAny([role()])
+              || resource.data.visibleToUserIds.hasAny([request.auth.uid])
+            )
+          )
+        );
+    }
+
+    function validNotificationRecord(data, notificationId) {
+      return data.keys().hasAll([
+          'id', 'clinicId', 'title', 'message', 'type', 'severity', 'audience',
+          'recipientUserId', 'actorUserId', 'actorRole', 'recipientUserRole',
+          'relatedUserId', 'relatedUserRole', 'relatedMovementId', 'visibleToRoles',
+          'visibleToUserIds', 'readBy', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'clinicId', 'title', 'message', 'type', 'severity', 'audience',
+          'recipientUserId', 'actorUserId', 'actorRole', 'recipientUserRole',
+          'relatedUserId', 'relatedUserRole', 'relatedMovementId', 'visibleToRoles',
+          'visibleToUserIds', 'readBy', 'createdAt', 'updatedAt'
+        ])
+        && data.id == notificationId
+        && data.clinicId == 'clinic_dr_oscar_dubon'
+        && data.title is string
+        && data.message is string
+        && data.title.size() > 0
+        && data.title.size() <= 80
+        && data.message.size() > 0
+        && data.message.size() <= 240
+        && validNotificationType(data.type)
+        && validNotificationSeverity(data.severity)
+        && validNotificationAudience(data.audience)
+        && data.recipientUserId is string
+        && data.actorUserId is string
+        && validOptionalRole(data.actorRole)
+        && validOptionalRole(data.recipientUserRole)
+        && data.relatedUserId is string
+        && validOptionalRole(data.relatedUserRole)
+        && data.relatedMovementId is string
+        && validNotificationRoleList(data.visibleToRoles)
+        && validStringList(data.visibleToUserIds)
+        && validStringList(data.readBy)
+        && data.readBy.size() == 0
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function exactResponsibleAudience(data) {
+      return data.audience == 'responsibles'
+        && data.visibleToRoles.size() == 2
+        && data.visibleToRoles.hasAll(['technical_owner', 'business_owner'])
+        && data.visibleToUserIds.size() == 0
+        && data.recipientUserId == '';
+    }
+
+    function canCreateAccessRequestNotification(data) {
+      return signedIn()
+        && data.type == 'access_request'
+        && exactResponsibleAudience(data)
+        && data.actorUserId == request.auth.uid
+        && data.actorRole == 'admin'
+        && data.relatedUserId == request.auth.uid
+        && data.relatedUserRole == 'admin'
+        && data.relatedMovementId == '';
+    }
+
+    function canCreateApprovalNotification(data) {
+      return canManageUsers()
+        && data.type == 'user_approved'
+        && data.audience == 'user'
+        && data.actorUserId == ''
+        && data.actorRole == ''
+        && data.relatedMovementId == ''
+        && data.recipientUserId != ''
+        && data.relatedUserId == data.recipientUserId
+        && data.visibleToRoles.size() == 0
+        && data.visibleToUserIds.size() == 1
+        && data.visibleToUserIds.hasAll([data.recipientUserId])
+        && exists(/databases/$(database)/documents/users/$(data.recipientUserId))
+        && get(/databases/$(database)/documents/users/$(data.recipientUserId)).data.clinicId == clinicId()
+        && get(/databases/$(database)/documents/users/$(data.recipientUserId)).data.status == 'active'
+        && get(/databases/$(database)/documents/users/$(data.recipientUserId)).data.role != 'technical_owner'
+        && (
+          technicalOwner()
+          || get(/databases/$(database)/documents/users/$(data.recipientUserId)).data.role == 'admin'
+        );
+    }
+
+    function canCreateMovementNotification(data) {
+      return canCreateMovement()
+        && data.type in ['income_created', 'expense_created', 'movement_deleted']
+        && exactResponsibleAudience(data)
+        && data.actorUserId == ''
+        && data.actorRole == ''
+        && data.recipientUserRole == ''
+        && data.relatedUserId == ''
+        && data.relatedUserRole == ''
+        && data.relatedMovementId != '';
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if canReadNotificationResource();
+      allow create: if validNotificationRecord(request.resource.data, notificationId)
+        && request.resource.data.clinicId == clinicId()
+        && (
+          canCreateAccessRequestNotification(request.resource.data)
+          || canCreateApprovalNotification(request.resource.data)
+          || canCreateMovementNotification(request.resource.data)
+        );
+      allow update: if canReadNotificationResource()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.readBy is list
+        && request.resource.data.readBy.hasAll(resource.data.readBy)
+        && request.auth.uid in request.resource.data.readBy
+        && (
+          (
+            !(request.auth.uid in resource.data.readBy)
+            && request.resource.data.readBy.size() == resource.data.readBy.size() + 1
+          )
+          || (
+            request.auth.uid in resource.data.readBy
+            && request.resource.data.readBy.size() == resource.data.readBy.size()
+          )
+        );
+      allow delete: if false;
+    }
     match /users/{userId} {
       // Pending y disabled solo pueden leer su propio perfil. Los responsables
       // activos pueden consultar usuarios de su misma clínica.

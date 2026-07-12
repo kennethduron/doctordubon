@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, BookOpen, HeartPulse, Home, LogOut, Menu, MoreHorizontal, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { BookOpen, HeartPulse, Home, LogOut, Menu, MoreHorizontal, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useState } from 'react';
+import { NotificationsPopover } from '@/components/notifications/notifications-popover';
 import { useAuth } from '@/context/auth-context';
 import { APP_NAME, CLINIC_NAME } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -54,15 +55,7 @@ export function MobileNav() {
           </Link>
         </div>
         <div className={'flex items-center gap-2'}>
-          <button
-            type={'button'}
-            className={'relative flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-border-soft'}
-            aria-label={'Notificaciones próximamente'}
-            title={'Notificaciones próximamente'}
-            disabled
-          >
-            <Bell className={'h-5 w-5'} />
-          </button>
+          <NotificationsPopover compact />
           <div className={'flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary shadow-sm'} title={displayName}>
             {displayName
               .split(' ')

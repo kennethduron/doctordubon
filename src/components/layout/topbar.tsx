@@ -1,6 +1,7 @@
 'use client';
 
-import { Bell, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import { NotificationsPopover } from '@/components/notifications/notifications-popover';
 import { useAuth } from '@/context/auth-context';
 import { roleLabels } from '@/lib/roles';
 
@@ -34,18 +35,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
         </div>
 
         <div className={'flex shrink-0 items-center gap-3'}>
-          <button
-            className={'inline-flex min-h-11 cursor-not-allowed items-center gap-3 rounded-lg border border-border-soft bg-white px-4 text-sm font-semibold text-slate-500 shadow-sm'}
-            type={'button'}
-            aria-label={'Notificaciones próximamente'}
-            title={'Notificaciones próximamente'}
-            disabled
-          >
-            <span className={'flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-primary'}>
-              <Bell className={'h-4 w-4'} />
-            </span>
-            Notificaciones próximamente
-          </button>
+          <NotificationsPopover />
           <div className={'flex min-h-11 items-center gap-3 rounded-lg border border-border-soft bg-white px-3 py-2 shadow-sm'}>
             <div className={'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-sm font-bold text-primary'}>
               {getInitials(displayName)}

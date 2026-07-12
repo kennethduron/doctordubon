@@ -36,7 +36,7 @@ La entrega puede aceptarse cuando los 15 pasos finalicen sin errores que impidan
 ## Fuera de alcance de esta aceptación
 
 - Correos personalizados mediante Resend: fase futura.
-- Notificaciones mediante FCM: fase futura.
+- Notificaciones push mediante FCM o permisos del navegador: fase futura. El centro interno de notificaciones en Firestore sí forma parte de esta entrega.
 
 ## Correos del sistema
 
@@ -63,6 +63,21 @@ Antes de probar registro, verificación de correo o recuperación de contraseña
 ## Reglas de usuarios
 
 Después de esta fase, publicar reglas de Firestore para que el Dueño operativo no pueda leer documentos del Técnico operativo:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+## Prueba de notificaciones internas
+
+- Crear una cuenta nueva y confirmar que el Técnico operativo vea en la campana la notificación “Nueva solicitud de acceso”.
+- Aprobar una cuenta y confirmar que el usuario aprobado vea “Acceso aprobado” al iniciar sesión.
+- Registrar un ingreso y un gasto; confirmar que los responsables operativos vean las notificaciones correspondientes.
+- Retirar un movimiento del listado activo y confirmar la notificación “Movimiento eliminado”.
+- Usar “Marcar todas como leídas” y confirmar que el contador de la campana quede en cero.
+- Entrar como Dueño operativo y confirmar que no aparecen notificaciones relacionadas con el Técnico operativo.
+
+Después de publicar esta fase, desplegar reglas de Firestore:
 
 ```bash
 firebase deploy --only firestore:rules

@@ -31,6 +31,19 @@ Firebase no se usa como hosting, dominio ni deploy de la app web. Vercel no publ
 - `firestore.rules`
 - `firestore.indexes.json`
 
+## Notificaciones internas
+
+El sistema incluye un centro de notificaciones interno basado en la colección `notifications` de Cloud Firestore. La campana del encabezado muestra notificaciones no leídas, permite revisar las más recientes y marcarlas como leídas.
+
+Eventos cubiertos en esta fase:
+
+- Nueva solicitud de acceso para responsables operativos.
+- Cuenta aprobada para el usuario aprobado.
+- Ingreso o gasto registrado para responsables operativos.
+- Movimiento retirado del listado activo para responsables operativos.
+
+Esta fase no usa FCM, notificaciones push del navegador ni permisos del navegador. Las notificaciones son visibles únicamente dentro del sistema después de iniciar sesión. Si se modifican `firestore.rules`, se deben publicar manualmente con `firebase deploy --only firestore:rules`.
+
 ## Checklist
 
 Revisa `PROJECT_CHECKLIST.md` antes de entregar el sistema.

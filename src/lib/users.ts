@@ -1,6 +1,7 @@
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { CLINIC_ID } from "@/lib/constants";
-import { db } from "@/lib/firebase";
+import { db, getFirebaseErrorLogDetails } from "@/lib/firebase";
+import { createUserApprovedNotification } from "@/lib/notifications";
 import { canApproveUsers, canAssignRoles, canDisableUsers, isCriticalRole } from "@/lib/roles";
 import type { Role } from "@/types/role";
 import type { UserProfile, UserStatus } from "@/types/user";
@@ -142,6 +143,12 @@ export async function approveUser(userId: string, currentUserProfile: UserProfil
     status: "active",
     updatedAt: serverTimestamp(),
   });
+
+  try {
+    await createUserApprovedNotification({ ...targetUser, status: "active" });
+  } catch (error) {
+    console.error("Notification creation error:", getFirebaseErrorLogDetails(error));
+  }
 }
 
 export async function disableUser(userId: string, currentUserProfile: UserProfile) {

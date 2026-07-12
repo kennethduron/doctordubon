@@ -37,6 +37,7 @@
 - [x] Solo el Técnico operativo puede asignar roles de mayor acceso.
 - [x] Las cuentas pendientes o deshabilitadas solo pueden consultar su propio perfil.
 - [x] No existe eliminación física de usuarios ni movimientos.
+- [x] Reglas locales agregadas para `notifications`: lectura por rol, marcado como leído y sin borrado físico desde cliente.
 - [ ] Confirmar manualmente que `firestore.rules` está publicado en el proyecto de producción.
 - [ ] Confirmar manualmente que `firestore.indexes.json` está publicado en el proyecto de producción.
 
@@ -62,4 +63,5 @@
 - [ ] Confirmar en celular que el flujo principal sea cómodo para el doctor.
 - [ ] Confirmar con la cuenta del doctor que no puede modificar al Técnico operativo.
 - [ ] Resend: fase futura para correos personalizados; no implementado en esta entrega.
-- [ ] FCM: fase futura para notificaciones; no implementado en esta entrega.
+- [x] Centro interno de notificaciones implementado con Firestore.
+- [ ] FCM y notificaciones push del navegador: fase futura; no implementado en esta entrega.

@@ -10,6 +10,7 @@ import {
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { APP_URL, CLINIC_ID } from "@/lib/constants";
 import { auth, db, getFirebaseErrorLogDetails } from "@/lib/firebase";
+import { createAccessRequestNotification } from "@/lib/notifications";
 
 function createClientError(code: string) {
   return Object.assign(new Error(code), { code });
@@ -97,20 +98,32 @@ export async function registerWithEmail(name: string, username: string, email: s
 
   await updateProfile(credential.user, { displayName: cleanName });
 
+  const userProfile = {
+    id: credential.user.uid,
+    clinicId: CLINIC_ID,
+    name: cleanName,
+    username: cleanUsername,
+    email: credential.user.email ?? cleanEmail,
+    role: "admin" as const,
+    status: "pending" as const,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   try {
     await setDoc(doc(db, "users", credential.user.uid), {
-      id: credential.user.uid,
-      clinicId: CLINIC_ID,
-      name: cleanName,
-      username: cleanUsername,
-      email: credential.user.email ?? cleanEmail,
-      role: "admin",
-      status: "pending",
+      ...userProfile,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
   } catch {
     throw createClientError("registration/profile-create-failed");
+  }
+
+  try {
+    await createAccessRequestNotification(userProfile);
+  } catch (error) {
+    console.error("Notification creation error:", getFirebaseErrorLogDetails(error));
   }
 
   try {
