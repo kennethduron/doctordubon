@@ -1,4 +1,4 @@
-﻿import type { Role } from "@/types/role";
+import type { Role } from "@/types/role";
 
 export const roleLabels: Record<Role, string> = {
   technical_owner: "Técnico operativo",
@@ -15,6 +15,10 @@ export function canApproveUsers(role?: Role | null) {
 }
 
 export function canDisableUsers(role?: Role | null) {
+  return role === "technical_owner" || role === "business_owner";
+}
+
+export function canEnableUsers(role?: Role | null) {
   return role === "technical_owner" || role === "business_owner";
 }
 

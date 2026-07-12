@@ -174,10 +174,39 @@ export async function createUserApprovedNotification(targetUser: UserProfile) {
     audience: "user",
     recipientUserId: targetUser.id,
     recipientUserRole: targetUser.role,
-
     relatedUserId: targetUser.id,
     relatedUserRole: targetUser.role,
     visibleToUserIds: [targetUser.id],
+  });
+}
+
+export async function createUserEnabledNotification(targetUser: UserProfile) {
+  return createNotification({
+    clinicId: targetUser.clinicId,
+    title: "Acceso habilitado",
+    message: "Tu acceso al sistema fue habilitado nuevamente.",
+    type: "system",
+    severity: "success",
+    audience: "user",
+    recipientUserId: targetUser.id,
+    recipientUserRole: targetUser.role,
+    relatedUserId: targetUser.id,
+    relatedUserRole: targetUser.role,
+    visibleToUserIds: [targetUser.id],
+  });
+}
+
+export async function createUserDisabledNotification(targetUser: UserProfile) {
+  return createNotification({
+    clinicId: targetUser.clinicId,
+    title: "Acceso deshabilitado",
+    message: "Una cuenta fue deshabilitada para proteger el acceso del consultorio.",
+    type: "system",
+    severity: "warning",
+    audience: targetUser.role === "admin" ? "responsibles" : "technical_owner",
+    relatedUserId: targetUser.id,
+    relatedUserRole: targetUser.role,
+    visibleToRoles: targetUser.role === "admin" ? responsibleRoles : ["technical_owner"],
   });
 }
 

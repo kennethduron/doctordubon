@@ -60,6 +60,18 @@ Antes de probar registro, verificación de correo o recuperación de contraseña
 - Solicitar recuperación de contraseña y comprobar que el botón abra `/restablecer-contrasena` dentro del sistema.
 - Si las variables de Resend o Firebase Admin faltan, confirmar que el flujo de Firebase Authentication siga funcionando como respaldo.
 
+
+## Prueba de administración de usuarios
+
+- Entrar como Técnico operativo y confirmar que las solicitudes pendientes muestran “Aprobar acceso”.
+- Confirmar que usuarios activos muestran “Deshabilitar” cuando la cuenta actual tiene permiso.
+- Deshabilitar un Administrador y confirmar que aparece en “Usuarios deshabilitados”.
+- Confirmar que el usuario deshabilitado muestra el botón “Habilitar” en computadora y celular.
+- Habilitar el Administrador y confirmar que vuelve a “Usuarios activos”.
+- Entrar como Dueño operativo y confirmar que puede aprobar, deshabilitar y habilitar Administradores.
+- Entrar como Dueño operativo y confirmar que no ve al Técnico operativo en listas, conteos, detalles ni notificaciones.
+- Entrar como Administrador y confirmar que no puede abrir Usuarios y permisos.
+
 ## Reglas de usuarios
 
 Después de esta fase, publicar reglas de Firestore para que el Dueño operativo no pueda leer documentos del Técnico operativo:

@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select } from "@/components/ui/select";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useAuth } from "@/context/auth-context";
-import { approveUser, disableUser, getUsersByClinic, updateUserRole } from "@/lib/users";
-import { canApproveUsers, canAssignRoles, canDisableUsers, roleLabels } from "@/lib/roles";
+import { approveUser, disableUser, enableUser, getUsersByClinic, updateUserRole } from "@/lib/users";
+import { canApproveUsers, canAssignRoles, canDisableUsers, canEnableUsers, roleLabels } from "@/lib/roles";
 import { formatDate } from "@/lib/utils";
 import type { Role } from "@/types/role";
 import type { UserProfile, UserStatus } from "@/types/user";
@@ -54,7 +54,7 @@ const roleOptions: Array<{ value: Role; label: string }> = [
 function statusBadgeVariant(status: UserStatus) {
   if (status === "active") return "income";
   if (status === "disabled") return "expense";
-  return "neutral";
+  return "primary";
 }
 
 function canCurrentUserApproveTarget(currentRole: Role | null, targetRole: Role) {
@@ -62,6 +62,10 @@ function canCurrentUserApproveTarget(currentRole: Role | null, targetRole: Role)
 }
 
 function canCurrentUserDisableTarget(currentRole: Role | null, targetRole: Role) {
+  return currentRole === "technical_owner" || (currentRole === "business_owner" && targetRole === "admin");
+}
+
+function canCurrentUserEnableTarget(currentRole: Role | null, targetRole: Role) {
   return currentRole === "technical_owner" || (currentRole === "business_owner" && targetRole === "admin");
 }
 
@@ -75,6 +79,7 @@ export function UsersTable() {
   const [detailUser, setDetailUser] = useState<UserProfile | null>(null);
   const canApprove = canApproveUsers(role);
   const canDisable = canDisableUsers(role);
+  const canEnable = canEnableUsers(role);
   const canAssign = canAssignRoles(role);
 
   const loadUsers = useCallback(async () => {
@@ -136,6 +141,11 @@ export function UsersTable() {
     await runUserAction(user.id, () => disableUser(user.id, userProfile), "Usuario deshabilitado correctamente.");
   }
 
+  async function handleEnable(user: UserProfile) {
+    if (!userProfile) return;
+    await runUserAction(user.id, () => enableUser(user.id, userProfile), "Usuario habilitado correctamente.");
+  }
+
   async function handleRoleChange(user: UserProfile, nextRole: Role) {
     if (!userProfile || user.role === nextRole) return;
     await runUserAction(user.id, () => updateUserRole(user.id, nextRole, userProfile), "Rol actualizado correctamente.");
@@ -151,8 +161,11 @@ export function UsersTable() {
       && canDisable
       && user.status !== "disabled"
       && canCurrentUserDisableTarget(role, user.role);
+    const canEnableTarget = canEnable
+      && user.status === "disabled"
+      && canCurrentUserEnableTarget(role, user.role);
 
-    return { actionDisabled, protectsSelf, canApproveTarget, canDisableTarget };
+    return { actionDisabled, protectsSelf, canApproveTarget, canDisableTarget, canEnableTarget };
   }
 
   function renderRole(user: UserProfile, mobile = false) {
@@ -183,7 +196,7 @@ export function UsersTable() {
   }
 
   function renderActions(user: UserProfile) {
-    const { actionDisabled, canApproveTarget, canDisableTarget } = getActionState(user);
+    const { actionDisabled, canApproveTarget, canDisableTarget, canEnableTarget } = getActionState(user);
 
     return (
       <div className="flex flex-wrap gap-2">
@@ -194,7 +207,12 @@ export function UsersTable() {
         ) : null}
         {canDisableTarget ? (
           <Button type="button" variant="secondary" disabled={actionDisabled} onClick={() => void handleDisable(user)}>
-            Deshabilitar
+            {actionDisabled ? "Guardando..." : "Deshabilitar"}
+          </Button>
+        ) : null}
+        {canEnableTarget ? (
+          <Button type="button" variant="secondary" disabled={actionDisabled} onClick={() => void handleEnable(user)}>
+            {actionDisabled ? "Guardando..." : "Habilitar"}
           </Button>
         ) : null}
         <Button type="button" variant="subtle" disabled={actionDisabled} onClick={() => setDetailUser(user)}>

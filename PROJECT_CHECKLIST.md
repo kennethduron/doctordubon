@@ -23,6 +23,7 @@
 - [x] Navegación móvil probada.
 - [x] Acceso a Usuarios y permisos protegido por rol.
 - [x] Acceso a Configuración protegido por rol.
+- [x] Usuarios deshabilitados muestran acción “Habilitar” cuando corresponde.
 - [ ] Probar una cuenta deshabilitada en el flujo final.
 - [ ] Probar cerrar sesión nuevamente durante la aceptación final.
 
@@ -33,6 +34,7 @@
 - [x] El Administrador no puede administrar usuarios ni configuración.
 - [x] El Administrador no puede editar ni eliminar movimientos.
 - [x] El Dueño operativo solo puede administrar Administradores.
+- [x] El Dueño operativo puede habilitar Administradores deshabilitados.
 - [x] El Dueño operativo no puede modificar ni deshabilitar al Técnico operativo.
 - [x] Solo el Técnico operativo puede asignar roles de mayor acceso.
 - [x] Las cuentas pendientes o deshabilitadas solo pueden consultar su propio perfil.

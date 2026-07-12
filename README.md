@@ -44,6 +44,18 @@ Eventos cubiertos en esta fase:
 
 Esta fase no usa FCM, notificaciones push del navegador ni permisos del navegador. Las notificaciones son visibles únicamente dentro del sistema después de iniciar sesión. Si se modifican `firestore.rules`, se deben publicar manualmente con `firebase deploy --only firestore:rules`.
 
+
+## Administración de usuarios
+
+La pantalla `Usuarios y permisos` permite revisar solicitudes pendientes, usuarios activos y usuarios deshabilitados.
+
+- El Técnico operativo puede ver todos los usuarios, aprobar solicitudes, asignar roles permitidos, deshabilitar cuentas y habilitar cuentas deshabilitadas.
+- El Dueño operativo administra únicamente cuentas de Administrador: puede aprobar solicitudes, deshabilitar Administradores y habilitarlos nuevamente.
+- El Dueño operativo no ve al Técnico operativo en listas, conteos ni detalles.
+- El Administrador no accede a la administración de usuarios.
+
+Las reglas de Firestore deben estar publicadas para que estas restricciones también apliquen en la base de datos.
+
 ## Checklist
 
 Revisa `PROJECT_CHECKLIST.md` antes de entregar el sistema.

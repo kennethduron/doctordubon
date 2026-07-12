@@ -1,8 +1,8 @@
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { CLINIC_ID } from "@/lib/constants";
 import { db, getFirebaseErrorLogDetails } from "@/lib/firebase";
-import { createUserApprovedNotification } from "@/lib/notifications";
-import { canApproveUsers, canAssignRoles, canDisableUsers, isCriticalRole } from "@/lib/roles";
+import { createUserApprovedNotification, createUserDisabledNotification, createUserEnabledNotification } from "@/lib/notifications";
+import { canApproveUsers, canAssignRoles, canDisableUsers, canEnableUsers, isCriticalRole } from "@/lib/roles";
 import type { Role } from "@/types/role";
 import type { UserProfile, UserStatus } from "@/types/user";
 
@@ -93,6 +93,17 @@ function assertCanDisable(targetUser: UserProfile, currentUserProfile: UserProfi
     throw new Error("No tienes permiso para gestionar esta cuenta.");
   }
 }
+function assertCanEnable(targetUser: UserProfile, currentUserProfile: UserProfile) {
+  assertSameClinic(targetUser, currentUserProfile);
+
+  if (!canEnableUsers(currentUserProfile.role)) {
+    throw new Error("No tienes permiso para habilitar usuarios.");
+  }
+
+  if (currentUserProfile.role === "business_owner" && targetUser.role !== "admin") {
+    throw new Error("No tienes permiso para gestionar esta cuenta.");
+  }
+}
 
 function assertCanChangeRole(targetUser: UserProfile, nextRole: Role, currentUserProfile: UserProfile) {
   assertSameClinic(targetUser, currentUserProfile);
@@ -163,6 +174,28 @@ export async function disableUser(userId: string, currentUserProfile: UserProfil
     status: "disabled",
     updatedAt: serverTimestamp(),
   });
+
+  try {
+    await createUserDisabledNotification({ ...targetUser, status: "disabled" });
+  } catch (error) {
+    console.error("Notification creation error:", getFirebaseErrorLogDetails(error));
+  }
+}
+
+export async function enableUser(userId: string, currentUserProfile: UserProfile) {
+  const targetUser = await getUserProfile(userId);
+  assertCanEnable(targetUser, currentUserProfile);
+
+  await updateDoc(doc(db, "users", userId), {
+    status: "active",
+    updatedAt: serverTimestamp(),
+  });
+
+  try {
+    await createUserEnabledNotification({ ...targetUser, status: "active" });
+  } catch (error) {
+    console.error("Notification creation error:", getFirebaseErrorLogDetails(error));
+  }
 }
 
 export async function updateUserRole(userId: string, role: Role, currentUserProfile: UserProfile) {
