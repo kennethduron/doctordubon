@@ -1,3 +1,5 @@
+import type { Auth } from "firebase-admin/auth";
+import type { Firestore } from "firebase-admin/firestore";
 import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
 import { CLINIC_ID } from "@/lib/constants";
@@ -51,6 +53,75 @@ function getServerErrorDetails(error: unknown) {
         ? error.name
         : null,
   };
+}
+
+function isAuthUserNotFound(error: unknown) {
+  return (
+    typeof error === "object"
+    && error !== null
+    && "code" in error
+    && error.code === "auth/user-not-found"
+  );
+}
+
+async function authUserExists(adminAuth: Auth, uid: string) {
+  try {
+    await adminAuth.getUser(uid);
+    return true;
+  } catch (error) {
+    if (isAuthUserNotFound(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+async function removeOrphanedUsernameIndex(adminAuth: Auth, adminDb: Firestore, cleanUsername: string) {
+  const usernameRef = adminDb.collection("usernames").doc(cleanUsername);
+  const usernameSnapshot = await usernameRef.get();
+
+  if (!usernameSnapshot.exists) {
+    return;
+  }
+
+  const indexedUid = String(usernameSnapshot.data()?.uid ?? "").trim();
+  let indexedProfileExists = false;
+  let indexedAuthUserExists = false;
+
+  if (indexedUid) {
+    const indexedProfileSnapshot = await adminDb.collection("users").doc(indexedUid).get();
+    indexedProfileExists = indexedProfileSnapshot.exists;
+    indexedAuthUserExists = await authUserExists(adminAuth, indexedUid);
+  } else {
+    const matchingProfiles = await adminDb
+      .collection("users")
+      .where("username", "==", cleanUsername)
+      .limit(1)
+      .get();
+    indexedProfileExists = !matchingProfiles.empty;
+  }
+
+  if (indexedAuthUserExists || indexedProfileExists) {
+    return;
+  }
+
+  await adminDb.runTransaction(async (transaction) => {
+    const currentUsernameSnapshot = await transaction.get(usernameRef);
+
+    if (!currentUsernameSnapshot.exists) {
+      return;
+    }
+
+    const currentIndexedUid = String(currentUsernameSnapshot.data()?.uid ?? "").trim();
+    if (currentIndexedUid === indexedUid) {
+      transaction.delete(usernameRef);
+    }
+  });
+
+  console.warn("Register profile orphaned username index cleaned:", {
+    code: "registration/orphaned-username-cleaned",
+  });
 }
 
 export async function POST(request: Request) {
@@ -129,6 +200,8 @@ export async function POST(request: Request) {
   const usernameRef = adminDb.collection("usernames").doc(cleanUsername);
 
   try {
+    await removeOrphanedUsernameIndex(adminAuth, adminDb, cleanUsername);
+
     await adminDb.runTransaction(async (transaction) => {
       const userSnapshot = await transaction.get(userRef);
       const usernameSnapshot = await transaction.get(usernameRef);
@@ -162,15 +235,18 @@ export async function POST(request: Request) {
       }
 
       if (usernameSnapshot.exists) {
-        throw new UsernameTakenError();
+        if (usernameSnapshot.data()?.uid !== decodedToken.uid) {
+          throw new UsernameTakenError();
+        }
+      } else {
+        transaction.create(usernameRef, {
+          uid: decodedToken.uid,
+          email,
+          clinicId: CLINIC_ID,
+          createdAt: FieldValue.serverTimestamp(),
+        });
       }
 
-      transaction.create(usernameRef, {
-        uid: decodedToken.uid,
-        email,
-        clinicId: CLINIC_ID,
-        createdAt: FieldValue.serverTimestamp(),
-      });
       transaction.create(userRef, {
         id: decodedToken.uid,
         clinicId: CLINIC_ID,

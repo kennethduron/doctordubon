@@ -59,7 +59,7 @@ export default function RegisterPage() {
 
       if (result.verificationEmailSent) {
         setSuccess(
-          "Cuenta creada correctamente. Te enviamos un correo de verificación. Después de verificarlo, tu acceso quedará pendiente de aprobación por el Técnico operativo o el Dueño operativo.",
+          "Cuenta creada correctamente. Te enviamos un correo de verificación. Después de verificarlo, tu acceso quedará pendiente de aprobación.",
         );
       } else {
         setError(
@@ -105,7 +105,7 @@ export default function RegisterPage() {
             minLength={3}
             maxLength={30}
             pattern="[a-z0-9._-]{3,30}"
-            title="Use entre 3 y 30 letras, números, puntos, guiones bajos o guiones medios."
+            title="Usa entre 3 y 30 caracteres: letras, números y, opcionalmente, punto, guion bajo o guion medio."
             aria-describedby="username-help"
             required
             onChange={(event) => setUsername(normalizeUsername(event.target.value))}
@@ -140,7 +140,7 @@ export default function RegisterPage() {
           />
         </div>
         <p id="username-help" className="text-xs leading-5 text-slate-500">
-          El usuario tendrá entre 3 y 30 caracteres. Puede usar letras, números, punto, guion bajo o guion medio; si escribes @ al inicio, se omitirá.
+          El usuario debe tener entre 3 y 30 caracteres. Puedes usar letras y números; el punto, guion bajo y guion medio son opcionales. Si escribes @ al inicio, se omitirá automáticamente.
         </p>
         {error ? <p className="rounded-md bg-danger-soft p-3 text-sm font-medium text-danger">{error}</p> : null}
         {success ? <p className="rounded-md bg-mint p-3 text-sm leading-6 font-medium text-mint-strong">{success}</p> : null}

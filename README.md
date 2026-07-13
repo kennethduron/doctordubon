@@ -43,7 +43,7 @@ Para crear la identidad, el perfil y la reserva del nombre de usuario, Vercel de
 
 La creación directa de perfiles y la colección privada de nombres de usuario están bloqueadas para el cliente. Publica las reglas ejecutando firebase deploy --only firestore:rules.
 
-Si una identidad quedó creada sin perfil antes de esta corrección, elimínala en Firebase Console -> Authentication -> Users. Después comprueba y elimina, si existen, users/{uid} y usernames/{username} antes de volver a registrar la cuenta. No elimines perfiles que tengan actividad financiera.
+Si una identidad quedó creada sin perfil antes de esta corrección, elimínala en Firebase Console -> Authentication -> Users. Después comprueba, solo para cuentas de prueba o sin historial, users/{uid} y usernames/{username}. El registro actual intenta limpiar automáticamente una reserva usernames/{username} cuando confirma que ya no existe el usuario en Authentication ni el perfil users/{uid}; si Auth o el perfil todavía existen, el usuario se considera ocupado. No elimines perfiles que tengan actividad financiera.
 
 ## Notificaciones internas
 

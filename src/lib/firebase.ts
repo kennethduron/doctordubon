@@ -71,12 +71,12 @@ export function getFirebaseErrorMessage(
     "validation/missing-name": "Ingrese el nombre completo.",
     "validation/missing-email": "Ingrese el correo.",
     "validation/invalid-username":
-      "El usuario debe tener entre 3 y 30 caracteres y usar solo letras, números, punto, guion bajo o guion medio.",
+      "El usuario debe tener entre 3 y 30 caracteres. Puedes usar letras y números; el punto, guion bajo y guion medio son opcionales.",
     "registration/username-in-use": "Este usuario ya está en uso. Elige otro.",
     "registration/profile-create-failed":
       "No se pudo completar el perfil de acceso. Si el problema continúa, contacta al encargado del sistema.",
     "registration/profile-create-failed-account-retained":
-      "La cuenta fue creada, pero no se pudo completar el perfil de acceso. Contacta al encargado del sistema.",
+      "La cuenta fue creada, pero no se pudo completar el perfil de acceso. Si el problema continúa, contacta al encargado del sistema.",
     "registration/verification-email-failed":
       "La cuenta fue creada, pero no se pudo enviar el correo de verificación. Puedes solicitar otro enlace desde la pantalla de acceso.",
     "auth/invalid-credential": "Usuario, correo o contraseña incorrectos.",
