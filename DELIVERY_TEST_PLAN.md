@@ -87,6 +87,7 @@ Antes de probar registro, verificación de correo o recuperación de contraseña
 - Entrar como Administrador y confirmar que no puede abrir Usuarios y permisos.
 
 - Como Técnico operativo, eliminar una cuenta pendiente sin historial y confirmar que desaparezca de autenticación, usuarios y reservas.
+- Como Técnico operativo, eliminar una cuenta de Dueño operativo de prueba sin historial y confirmar que no pueda eliminarse a sí mismo ni eliminar cuentas de Técnico operativo.
 - Como Dueño operativo, eliminar una cuenta de Administrador sin historial y confirmar que no pueda eliminar otros roles.
 - Intentar eliminar una cuenta que creó, editó o retiró un movimiento y confirmar el mensaje que indica deshabilitarla.
 - Confirmar que ninguna cuenta pueda eliminarse a sí misma y que el Administrador no vea acciones de eliminación.

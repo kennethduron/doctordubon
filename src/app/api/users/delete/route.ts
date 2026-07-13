@@ -17,7 +17,7 @@ type ServerUserProfile = {
   id: string;
   clinicId: string;
   role: "technical_owner" | "business_owner" | "admin";
-  username: string;
+  username: string | null;
   status: "active" | "pending" | "disabled";
 };
 
@@ -44,33 +44,47 @@ function parseProfile(id: string, data: Record<string, unknown>): ServerUserProf
   const status = data.status;
   if (
     typeof data.clinicId !== "string" ||
-    typeof data.username !== "string" ||
-    !isValidUsername(data.username) ||
     (role !== "technical_owner" && role !== "business_owner" && role !== "admin") ||
     (status !== "active" && status !== "pending" && status !== "disabled")
   ) {
     return null;
   }
 
+  const username = typeof data.username === "string" && isValidUsername(data.username)
+    ? normalizeUsername(data.username)
+    : null;
+
   return {
     id,
     clinicId: data.clinicId,
     role,
-    username: normalizeUsername(data.username),
+    username,
     status,
   };
 }
 
-function canDeleteTarget(actor: ServerUserProfile, target: ServerUserProfile) {
-  if (actor.status !== "active" || actor.clinicId !== target.clinicId || actor.id === target.id) {
-    return false;
+function getDeletePermissionError(actor: ServerUserProfile, target: ServerUserProfile) {
+  if (actor.id === target.id) {
+    return "users/delete-self";
+  }
+
+  if (target.role === "technical_owner") {
+    return "users/delete-protected";
+  }
+
+  if (actor.status !== "active" || actor.clinicId !== target.clinicId) {
+    return "users/not-authorized";
   }
 
   if (actor.role === "technical_owner") {
-    return target.role !== "technical_owner";
+    return null;
   }
 
-  return actor.role === "business_owner" && target.role === "admin";
+  if (actor.role === "business_owner" && target.role === "admin") {
+    return null;
+  }
+
+  return "users/not-authorized";
 }
 
 async function userHasImportantHistory(
@@ -133,24 +147,17 @@ export async function POST(request: Request) {
 
     const actor = parseProfile(actorSnapshot.id, actorSnapshot.data() ?? {});
     const target = parseProfile(targetSnapshot.id, targetSnapshot.data() ?? {});
-    if (!actor || !target || !canDeleteTarget(actor, target)) {
+    if (!actor || !target) {
       return NextResponse.json({ code: "users/not-authorized" }, { status: 403 });
+    }
+
+    const permissionError = getDeletePermissionError(actor, target);
+    if (permissionError) {
+      return NextResponse.json({ code: permissionError }, { status: 403 });
     }
 
     if (await userHasImportantHistory(adminDb, target.id)) {
       return NextResponse.json({ code: "users/has-history" }, { status: 409 });
-    }
-
-    if (target.status === "active") {
-      await targetRef.update({
-        status: "disabled",
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      target.status = "disabled";
-
-      if (await userHasImportantHistory(adminDb, target.id)) {
-        return NextResponse.json({ code: "users/has-history" }, { status: 409 });
-      }
     }
 
     try {
@@ -162,7 +169,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const usernameRef = adminDb.collection("usernames").doc(target.username);
+    const usernameRef = target.username ? adminDb.collection("usernames").doc(target.username) : null;
     const notificationRef = adminDb.collection("notifications").doc();
     const visibleToRoles = target.role === "admin"
       ? ["technical_owner", "business_owner"]
@@ -170,10 +177,10 @@ export async function POST(request: Request) {
     const audience = target.role === "admin" ? "responsibles" : "technical_owner";
 
     await adminDb.runTransaction(async (transaction) => {
-      const usernameSnapshot = await transaction.get(usernameRef);
+      const usernameSnapshot = usernameRef ? await transaction.get(usernameRef) : null;
       transaction.delete(targetRef);
 
-      if (usernameSnapshot.exists && usernameSnapshot.data()?.uid === target.id) {
+      if (usernameRef && usernameSnapshot?.exists && usernameSnapshot.data()?.uid === target.id) {
         transaction.delete(usernameRef);
       }
 

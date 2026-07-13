@@ -255,6 +255,14 @@ export async function deleteUserSafely(userId: string) {
     throw new Error("Este usuario tiene historial en el sistema. Puedes deshabilitarlo, pero no eliminarlo.");
   }
 
+  if (payload.code === "users/delete-self") {
+    throw new Error("No puedes eliminar tu propia cuenta.");
+  }
+
+  if (payload.code === "users/delete-protected") {
+    throw new Error("No se puede eliminar esta cuenta.");
+  }
+
   if (payload.code === "users/not-authorized") {
     throw new Error("No tienes permiso para eliminar este usuario.");
   }
