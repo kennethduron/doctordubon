@@ -61,11 +61,6 @@ export default function LoginPage() {
       footer={CLINIC_NAME}
       variant="split"
       panelTitle="Iniciar sesión"
-      highlights={[
-        "Control diario de ingresos y gastos",
-        "Reportes PDF y Excel",
-        "Acceso seguro por usuarios y roles",
-      ]}
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <Input
