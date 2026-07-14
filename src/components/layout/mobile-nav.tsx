@@ -1,8 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, HeartPulse, Home, LogOut, Menu, MoreHorizontal, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { BookOpen, Home, LogOut, Menu, MoreHorizontal, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useState } from 'react';
 import { NotificationsPopover } from '@/components/notifications/notifications-popover';
 import { useAuth } from '@/context/auth-context';
@@ -45,8 +46,14 @@ export function MobileNav() {
             {moreOpen ? <X className={'h-5 w-5'} /> : <Menu className={'h-5 w-5'} />}
           </button>
           <Link href={'/dashboard'} className={'flex min-w-0 items-center gap-2'} onClick={() => setMoreOpen(false)}>
-            <span className={'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary'}>
-              <HeartPulse className={'h-6 w-6'} />
+            <span className={'h-10 w-10 shrink-0 rounded-full border border-white/90 bg-white p-0.5 shadow-sm shadow-primary/10'}>
+              <Image
+                src={'/images/doctordubon.jpg'}
+                alt={'Dr. Oscar Dubon'}
+                width={40}
+                height={40}
+                className={'h-full w-full rounded-full object-cover'}
+              />
             </span>
             <span className={'min-w-0'}>
               <span className={'block truncate text-sm font-bold text-primary'}>{APP_NAME}</span>

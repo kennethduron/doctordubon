@@ -1,11 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
   BookOpen,
-  HeartPulse,
   Home,
   LogOut,
   PanelLeftClose,
@@ -88,9 +88,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </button>
 
       <div className={cn("border-b border-border-soft", collapsed ? "px-3 py-5" : "px-6 py-6")}>
-        <div className={cn("flex items-start", collapsed ? "justify-center" : "gap-3")}>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#0f3a5f,#0f70b7)] text-white shadow-lg shadow-primary/20">
-            <HeartPulse className="h-7 w-7" />
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}>
+          <div
+            className={cn(
+              "shrink-0 rounded-full border border-white/90 bg-white shadow-lg shadow-primary/15 transition-[height,width,padding] duration-300",
+              collapsed ? "h-12 w-12 p-1" : "h-16 w-16 p-1.5",
+            )}
+          >
+            <Image
+              src="/images/doctordubon.jpg"
+              alt="Dr. Oscar Dubon"
+              width={64}
+              height={64}
+              className="h-full w-full rounded-full object-cover"
+            />
           </div>
           <div className={cn("min-w-0 transition-opacity", collapsed && "sr-only opacity-0")}>
             <p className="text-base font-bold leading-6 text-primary">{APP_NAME}</p>
