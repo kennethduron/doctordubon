@@ -57,8 +57,15 @@ export default function LoginPage() {
   return (
     <AuthShell
       title={APP_NAME}
-      description="Ingresa para administrar ingresos, gastos y reportes del consultorio."
+      description="Administra ingresos, gastos y reportes financieros del consultorio de forma segura y organizada."
       footer={CLINIC_NAME}
+      variant="split"
+      panelTitle="Iniciar sesión"
+      highlights={[
+        "Control diario de ingresos y gastos",
+        "Reportes PDF y Excel",
+        "Acceso seguro por usuarios y roles",
+      ]}
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <Input
